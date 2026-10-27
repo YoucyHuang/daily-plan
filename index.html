@@ -314,6 +314,37 @@
   .t-add .btn { min-height:46px; padding:0 18px; white-space:nowrap; flex:none; }
   .t-hint { font-size:12px; color:var(--ink-3); margin-top:10px; line-height:1.6; }
   .t-foot { margin-top:auto; padding-top:24px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  /* 添加到主屏幕 */
+  .btn[hidden] { display:none; }
+  .install-top { margin-left:auto; white-space:nowrap; }
+  .install-banner {
+    display:flex; align-items:center; gap:12px; margin-bottom:20px; padding:12px 12px 12px 16px;
+    background:var(--sage-soft); border:1px solid var(--sage); border-radius:16px;
+  }
+  .install-banner[hidden] { display:none; }
+  .install-banner div { flex:1; min-width:0; }
+  .install-banner b { display:block; font-size:15px; }
+  .install-banner span { display:block; font-size:12px; color:var(--ink-2); margin-top:2px; }
+  .install-banner .btn { flex:none; white-space:nowrap; }
+  .install-x { flex:none; width:30px; height:30px; border:0; background:transparent; color:var(--ink-3); font-size:20px; cursor:pointer; border-radius:8px; }
+  .install-dialog h3 { font-size:18px; font-weight:600; margin-bottom:12px; }
+  .install-steps { padding-left:1.3em; display:grid; gap:12px; font-size:15px; line-height:1.6; }
+  .install-steps li::marker { color:var(--sage); font-weight:600; }
+  .install-steps .ico { display:inline-grid; place-items:center; vertical-align:-5px; width:26px; height:26px; margin:0 3px; border-radius:7px; background:var(--surface-2); }
+  .install-steps .ico svg { width:17px; height:17px; fill:none; stroke:#0a84ff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .install-steps small { display:block; color:var(--ink-3); font-size:12px; margin-top:2px; }
+  /* 指向浏览器按钮的跳动箭头：底部（iPhone 分享）或右上（微信 ···） */
+  .install-arrow { position:fixed; z-index:200; width:44px; height:44px; pointer-events:none;
+    background:no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 3v16M5 12l7 7 7-7' fill='none' stroke='%235f7d68' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    animation:nudge 1s ease-in-out infinite; }
+  .install-arrow[hidden] { display:none; }
+  .install-arrow.bottom { left:calc(50% - 22px); bottom:calc(10px + env(safe-area-inset-bottom)); }
+  .install-arrow.top-right { right:14px; top:calc(6px + env(safe-area-inset-top)); transform:rotate(180deg); }
+  @keyframes nudge { 50% { translate:0 8px; } }
+  .install-arrow.top-right { animation-name:nudge-up; }
+  @keyframes nudge-up { 50% { translate:0 -8px; } }
+  @media (max-width:760px) { .install-top { padding:6px 10px; font-size:13px; } }
+
   .t-archive { grid-column:1 / -1; min-height:48px; text-decoration:none; font-size:15px; letter-spacing:.04em; }
 
   /* ───────────────── 制卡 ───────────────── */
@@ -561,12 +592,20 @@
         <svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="2.6"/><path d="M4 6v12c0 1.4 3.6 2.6 8 2.6s8-1.2 8-2.6V6"/><path d="M4 12c0 1.4 3.6 2.6 8 2.6s8-1.2 8-2.6"/></svg>全部清单
       </a>
     </nav>
+    <button class="btn install-top" id="btnInstallTop" hidden>
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7.5v7M8.8 11.5L12 14.7l3.2-3.2"/></svg>添加到主屏幕
+    </button>
   </header>
 
   <main>
     <!-- ═══════════ 今日 ═══════════ -->
     <section class="view" id="viewToday">
       <div class="today-wrap">
+        <div class="install-banner" id="installBanner" hidden>
+          <div><b>装到手机主屏</b><span>像 App 一样全屏打开，断网也能用</span></div>
+          <button class="btn primary" id="btnInstallBanner">添加到主屏幕</button>
+          <button class="install-x" id="btnInstallDismiss" aria-label="不再提示">×</button>
+        </div>
         <div class="today-head">
           <div class="today-date" id="tDate"></div>
           <h1>今天要做的事</h1>
@@ -720,6 +759,17 @@
       </div>
     </section>
   </main>
+
+  <!-- 添加到主屏幕：iPhone 只能手动加，这里按当前浏览器给出对应步骤 -->
+  <dialog class="day-dialog install-dialog" id="installDialog">
+    <h3 id="installTitle">添加到主屏幕</h3>
+    <ol class="install-steps" id="installSteps"></ol>
+    <div class="dialog-actions">
+      <button class="btn primary" id="installCopy" hidden>复制网址</button>
+      <button class="btn" id="installClose">知道了</button>
+    </div>
+  </dialog>
+  <div class="install-arrow" id="installArrow" hidden></div>
 
   <dialog class="day-dialog" id="dayDialog">
     <div id="dayDialogCard"></div>
@@ -2034,6 +2084,85 @@
       exportTip.textContent = "失败：" + (err && err.message ? err.message : err) + "（可截图）";
     }
   });
+
+  /* ───────────────── 添加到主屏幕 ─────────────────
+     安卓 Chrome / 电脑 Edge、Chrome：浏览器给了安装事件，点按钮直接弹出安装。
+     iPhone：苹果不让网页自己添加，只能弹出图文步骤 + 箭头指向分享按钮。
+     微信 / 小红书等 App 里打开的不是真浏览器，先教用户跳到 Safari / Chrome。 */
+  const UA = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(UA);
+  const inApp = /MicroMessenger|XiaoHongShu|xhsdiscover|Weibo|QQ\/|DingTalk|Lark|Feishu|BytedanceWebview|aweme/i.test(UA);
+  const iosNotSafari = isIOS && /CriOS|FxiOS|EdgiOS/.test(UA);
+  const INSTALL_KEY = "dailyplan.installDismissed";
+  let installEvt = null;
+  const ICON_SHARE = '<span class="ico"><svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg></span>';
+  const ICON_MORE = '<span class="ico"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></span>';
+  const ICON_ADD = '<span class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>';
+
+  function syncInstallUI() {
+    const can = !standalone && (installEvt || isIOS || isAndroid || inApp);
+    let dismissed = false;
+    try { dismissed = localStorage.getItem(INSTALL_KEY) === "1"; } catch (e) {}
+    $("#installBanner").hidden = !can || dismissed || !(isIOS || isAndroid || inApp);
+    $("#btnInstallTop").hidden = !can || !$("#installBanner").hidden && document.body.dataset.view === "today";
+  }
+  window.addEventListener("hashchange", () => syncInstallUI());
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; syncInstallUI(); });
+  window.addEventListener("appinstalled", () => { installEvt = null; $("#btnInstallTop").hidden = true; $("#installBanner").hidden = true; });
+
+  function showInstallGuide() {
+    const steps = $("#installSteps"), arrow = $("#installArrow");
+    arrow.hidden = true; arrow.className = "install-arrow"; $("#installCopy").hidden = true;
+    if (inApp) {
+      $("#installTitle").textContent = "先换到浏览器里打开";
+      steps.innerHTML = `<li>现在是在 App 里打开的网页，没法添加到主屏幕。</li>
+        <li>点右上角 ${ICON_MORE}，选「在浏览器中打开」${isIOS ? "（iPhone 会用 Safari 打开）" : ""}。<small>如果没有这个选项，就点下面「复制网址」，再到 ${isIOS ? "Safari" : "Chrome"} 里粘贴打开。</small></li>
+        <li>打开后再点一次「添加到主屏幕」。</li>`;
+      $("#installCopy").hidden = false;
+      arrow.classList.add("top-right"); arrow.hidden = false;
+    } else if (isIOS) {
+      $("#installTitle").textContent = "添加到 iPhone 主屏幕";
+      steps.innerHTML = `<li>点${iosNotSafari ? "地址栏右边" : "屏幕底部"}的分享按钮 ${ICON_SHARE}
+          <small>新版 Safari 如果底下没有分享按钮：先点地址栏旁边的 ${ICON_MORE}，再点「分享」。</small></li>
+        <li>往下滑，点 ${ICON_ADD}「添加到主屏幕」。</li>
+        <li>点右上角「添加」。以后从桌面图标打开，就是全屏的今日清单。</li>`;
+      if (!iosNotSafari) { arrow.classList.add("bottom"); arrow.hidden = false; }
+    } else {
+      $("#installTitle").textContent = "添加到主屏幕";
+      steps.innerHTML = isAndroid
+        ? `<li>点浏览器右上角的菜单（竖着的三个点）。</li><li>选「添加到主屏幕」或「安装应用」。</li><li>点「安装」。以后从桌面图标打开就是全屏。</li>`
+        : `<li>用 Edge 或 Chrome 打开本页。</li><li>点地址栏右边的安装图标（一个小电脑加箭头），或菜单里的「安装每日计划」。</li><li>装好后它会像一个独立的小程序，可以固定到任务栏。</li>`;
+    }
+    $("#installDialog").showModal ? $("#installDialog").showModal() : $("#installDialog").setAttribute("open", "");
+  }
+  async function doInstall() {
+    if (installEvt) {
+      installEvt.prompt();
+      try { await installEvt.userChoice; } catch (e) {}
+      installEvt = null;
+      syncInstallUI();
+      return;
+    }
+    showInstallGuide();
+  }
+  $("#btnInstallTop").addEventListener("click", doInstall);
+  $("#btnInstallBanner").addEventListener("click", doInstall);
+  $("#btnInstallDismiss").addEventListener("click", () => {
+    try { localStorage.setItem(INSTALL_KEY, "1"); } catch (e) {}
+    $("#installBanner").hidden = true;
+  });
+  const closeInstall = () => { $("#installArrow").hidden = true; $("#installDialog").close ? $("#installDialog").close() : $("#installDialog").removeAttribute("open"); };
+  $("#installClose").addEventListener("click", closeInstall);
+  $("#installDialog").addEventListener("close", () => { $("#installArrow").hidden = true; });
+  $("#installCopy").addEventListener("click", async () => {
+    const url = location.origin + location.pathname;
+    try { await navigator.clipboard.writeText(url); $("#installCopy").textContent = "已复制 ✓"; }
+    catch (e) { prompt("长按复制这个网址：", url); }
+  });
+  syncInstallUI();
+  /* 分享 ?install=1 的链接：打开就直接弹出添加步骤 */
+  if (new URLSearchParams(location.search).has("install") && !standalone) setTimeout(doInstall, 400);
 
   /* 注册 Service Worker（离线缓存 / 可安装） */
   if ("serviceWorker" in navigator) {

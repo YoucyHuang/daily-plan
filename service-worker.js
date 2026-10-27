@@ -1,5 +1,5 @@
 /* 每日计划 · 离线缓存 Service Worker */
-const CACHE = "daily-plan-v3";
+const CACHE = "daily-plan-v4";
 const ASSETS = [
   "./",
   "./index.html",
