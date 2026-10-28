@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>每日计划</title>
+<title>每日计划 · 全部主题（主理人）</title>
+<meta name="description" content="主理人自用：全部 12 个主题，用来做宣传图">
+<meta property="og:type" content="website">
+<meta property="og:title" content="每日计划 · 全部主题（主理人）">
+<meta property="og:description" content="主理人自用：全部 12 个主题，用来做宣传图">
+<meta property="og:url" content="https://youcyhuang.github.io/daily-plan/studio/">
+<meta property="og:image" content="https://youcyhuang.github.io/daily-plan/previews/songhua.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <!--PRODUCT-->
 
 <!--
@@ -158,7 +165,7 @@
   /* 设计主题版式层 */
   .layout { position:absolute; inset:0; z-index:6; display:none; }
   .page.designed .layout { display:block; }
-  .page.designed > :not(.layout) { display:none; }
+  .page.designed > :not(.layout):not(.trial-mark) { display:none; }
   .lc {
     width:1080px; height:1440px; position:relative; overflow:hidden; text-align:left; line-height:1.5;
     --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; --serif:"Noto Serif SC","Songti SC",serif;
@@ -357,6 +364,21 @@
   .lock-box .field { width:100%; text-align:center; font-size:18px; letter-spacing:.16em; text-transform:uppercase; min-height:52px; }
   .lock-box .btn { width:100%; margin-top:12px; min-height:50px; font-size:16px; cursor:pointer; }
   .lock-err { font-size:13px; min-height:1.6em; margin-top:10px; }
+  .lock-trial { display:block; width:100%; margin-top:6px; padding:8px; border:0; background:transparent; font-size:14px; text-decoration:underline; text-underline-offset:4px; cursor:pointer; }
+  /* 试玩 */
+  .trial-bar { display:none; position:fixed; left:50%; top:calc(8px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:60;
+    padding:6px 8px 6px 16px; border-radius:99px; background:#191817; color:#f3eee5; font-size:13px; white-space:nowrap; box-shadow:var(--shadow); }
+  body.trial .trial-bar { display:flex; align-items:center; gap:10px; }
+  .trial-bar button { border:0; border-radius:99px; padding:5px 12px; background:var(--sage); color:#fff; font-size:12px; cursor:pointer; }
+  .trial-mark { position:absolute; inset:0; z-index:50; pointer-events:none; overflow:hidden; }
+  .trial-grid { position:absolute; inset:-200px; display:grid; grid-template-columns:repeat(6, 1fr); gap:90px 40px; transform:rotate(-24deg); align-content:center; }
+  .trial-grid span { font:700 34px/1 "Noto Sans SC", sans-serif; color:rgba(255,255,255,.55); -webkit-text-stroke:1.2px rgba(0,0,0,.35); white-space:nowrap; }
+  .trial-strip { position:absolute; left:0; right:0; bottom:0; padding:22px; text-align:center; background:rgba(25,24,23,.82); color:#fff; font:500 30px/1.2 "Noto Sans SC", sans-serif; letter-spacing:.08em; }
+  /* 引导 */
+  .tour h3 { font-size:20px; font-weight:600; margin-bottom:14px; }
+  .tour-steps { padding-left:1.3em; display:grid; gap:12px; font-size:14.5px; line-height:1.7; color:var(--ink-2); }
+  .tour-steps b { color:var(--ink-1); margin-right:6px; }
+  .tour .dialog-actions { grid-template-columns:1fr; }
 
   .t-archive { grid-column:1 / -1; min-height:48px; text-decoration:none; font-size:15px; letter-spacing:.04em; }
 
@@ -773,6 +795,18 @@
     </section>
   </main>
 
+  <!-- 第一次打开的 3 步引导 -->
+  <dialog class="day-dialog tour" id="tourDialog">
+    <h3>欢迎来到 Y世界 ✦</h3>
+    <ol class="tour-steps">
+      <li><b>今日</b>写下今天要做的事，做完点圆圈打 ✓，没做成再点一下变 ✗。</li>
+      <li><b>制卡</b>一键生成 1080×1440 的小红书卡片：首页（早上发）和尾页（晚上打完勾发），还能换配色、放自己的照片。</li>
+      <li><b>全部清单</b>每一天都会围成一个卷筒慢慢转，点开就能回看。数据只存在你自己的手机里。</li>
+    </ol>
+    <div class="dialog-actions"><button class="btn primary" id="tourGo">开始今天</button></div>
+  </dialog>
+  <div class="trial-bar">试玩中 · 导出的图片带水印 <button id="trialUnlock">输入星星密钥</button></div>
+
   <!-- 添加到主屏幕：iPhone 只能手动加，这里按当前浏览器给出对应步骤 -->
   <dialog class="day-dialog install-dialog" id="installDialog">
     <h3 id="installTitle">添加到主屏幕</h3>
@@ -822,6 +856,8 @@
      没有写入时（总控台 / 直接打开模板）= 全部主题，要用主理人的码解锁。 */
   const PRODUCT = window.PRODUCT || { slug: "studio", name: "每日计划 · 全部主题", themes: ALL_THEMES, hash: "04511be564a4028548a542af3935eda4457cc322ed7fc28648af69abfbc2f630" };
   const THEMES = PRODUCT.themes.filter((t) => ALL_THEMES.includes(t));
+  /* 每款自带一份贴合风格的示例清单，第一次打开就是宣传图里的样子 */
+  if (PRODUCT.sample) DEFAULT_ITEMS.splice(0, DEFAULT_ITEMS.length, ...PRODUCT.sample.map((text) => ({ text, mark: "empty" })));
   const DEFAULT_THEME = THEMES[0];
   let items = [];
   let idSeq = 1;
@@ -2042,7 +2078,17 @@
     await document.fonts.ready;
     let css;
     try { css = await fontEmbedCSS(page); } catch (e) { css = undefined; }
-    return await htmlToImage.toBlob(page, { pixelRatio: 1, width: 1080, height: 1440, cacheBust: true, fontEmbedCSS: css });
+    /* 试玩版：导出时盖一层水印，导出完就拿掉 */
+    let wm = null;
+    if (TRIAL) {
+      wm = document.createElement("div");
+      wm.className = "trial-mark";
+      wm.innerHTML = `<div class="trial-grid">${"<span>试用 · Y世界</span>".repeat(42)}</div><div class="trial-strip">试用版 · 购买后输入星星密钥即可去掉水印</div>`;
+      page.appendChild(wm);
+    }
+    try {
+      return await htmlToImage.toBlob(page, { pixelRatio: 1, width: 1080, height: 1440, cacheBust: true, fontEmbedCSS: css });
+    } finally { if (wm) wm.remove(); }
   }
   function isMobile() {
     return matchMedia("(pointer: coarse)").matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -2224,6 +2270,7 @@
      每款可以有很多把钥匙（平台卡密自动发货时一单一把）。网页里只存每把「款名:钥匙」的 SHA-256 摘要。
      输对一次就记在这台设备上，以后不用再输。 */
   const UNLOCK_KEY = "dailyplan.unlock." + PRODUCT.slug;
+  let TRIAL = false;
   const KEY_HASHES = PRODUCT.hashes || [PRODUCT.hash];
   async function sha256(t) {
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
@@ -2243,7 +2290,8 @@
       <h2 style="${ui.title}">进入Y世界的钥匙🔑</h2>
       <p style="${ui.sub}">输入你收到的星星密钥，输对一次，这台设备以后都不用再输。</p>
       <input class="field" name="code" autocomplete="off" autocapitalize="characters" placeholder="输入星星密钥" required style="${ui.input}">
-      <button class="btn" type="submit" style="${ui.btn}">打开大门</button><div class="lock-err" style="color:${ui.err}"></div></form>`;
+      <button class="btn" type="submit" style="${ui.btn}">打开大门</button><div class="lock-err" style="color:${ui.err}"></div>
+      <button class="lock-trial" type="button" style="${ui.sub}">还没有密钥？先试试看 →</button></form>`;
     document.body.appendChild(el);
     /* 背景：等主程序把这一款的卡片画好，复制一份铺满屏幕 */
     setTimeout(() => {
@@ -2255,6 +2303,13 @@
       fitBg(); addEventListener("resize", fitBg);
     }, 0);
     const form = el.querySelector("form");
+    /* 试玩：什么都能用，只是导出的图带水印；关掉页面就要重新进 */
+    el.querySelector(".lock-trial").addEventListener("click", () => {
+      TRIAL = true;
+      el.remove();
+      document.body.classList.add("trial");
+      showTour();
+    });
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const code = form.code.value.trim().toUpperCase().replace(/[\s"'“”「」:：]+/g, "");
@@ -2262,11 +2317,28 @@
       if (KEY_HASHES.includes(h)) {
         try { localStorage.setItem(UNLOCK_KEY, h); } catch (e2) {}
         el.remove();
+        showTour();
       } else {
         el.querySelector(".lock-err").textContent = "密钥不对，再核对一下收到的那串字母和数字。";
       }
     });
   })();
+
+  /* ───────────────── 第一次打开：3 步引导 ───────────────── */
+  const TOUR_KEY = "dailyplan.tour." + PRODUCT.slug;
+  function showTour() {
+    try { if (localStorage.getItem(TOUR_KEY) === "1") return; } catch (e) {}
+    const d = $("#tourDialog");
+    d.showModal ? d.showModal() : d.setAttribute("open", "");
+  }
+  $("#tourGo").addEventListener("click", () => {
+    try { localStorage.setItem(TOUR_KEY, "1"); } catch (e) {}
+    const d = $("#tourDialog");
+    d.close ? d.close() : d.removeAttribute("open");
+  });
+  $("#trialUnlock").addEventListener("click", () => { try { sessionStorage.clear(); } catch (e) {} location.reload(); });
+  /* 已经解锁过的老用户第一次看到新版，也给一次引导 */
+  try { if (KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY))) setTimeout(showTour, 300); } catch (e) {}
 
   /* 注册 Service Worker（离线缓存 / 可安装） */
   if ("serviceWorker" in navigator) {

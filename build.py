@@ -8,7 +8,8 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 8   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 9
+SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址   # 改了代码就加 1，手机上装好的版本会自动换新
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
 STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")
@@ -17,13 +18,27 @@ STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")
 def page(prod, up, preview):
     s = TPL.replace("__MASTER_HASH__", STUDIO["hash"])
     if prod["slug"] != "studio":
-        cfg = {k: prod[k] for k in ("slug", "name", "themes", "hash", "hashes") if k in prod}
+        cfg = {k: prod[k] for k in ("slug", "name", "themes", "hash", "hashes", "sample") if k in prod}
         s = s.replace("<!--PRODUCT-->", "<script>window.PRODUCT=" + json.dumps(cfg, ensure_ascii=False) + "</script>")
     s = s.replace('href="icon-192.png"', f'href="{up}icon-192.png"')
     s = s.replace('href="apple-touch-icon.png"', f'href="{up}apple-touch-icon.png"')
     s = s.replace('src="html-to-image.js"', f'src="{up}html-to-image.js"')
     s = s.replace('href="fonts/fonts.css"', f'href="{up}fonts/fonts.css"')
     s = s.replace('content="每日计划">', f'content="{html.escape(prod["short"])}">', 1)
+    # 链接发到聊天 / 社交平台时显示的标题、简介和封面
+    path = "studio/" if prod["slug"] == "studio" else f"p/{prod['slug']}/"
+    img = SITE + f"previews/{prod['slug']}.jpg" if prod["slug"] != "studio" else SITE + "previews/songhua.jpg"
+    meta = "\n".join([
+        f'<title>{html.escape(prod["name"])}</title>',
+        f'<meta name="description" content="{html.escape(prod["tagline"])}">',
+        '<meta property="og:type" content="website">',
+        f'<meta property="og:title" content="{html.escape(prod["name"])}">',
+        f'<meta property="og:description" content="{html.escape(prod["tagline"])}">',
+        f'<meta property="og:url" content="{SITE}{path}">',
+        f'<meta property="og:image" content="{img}">',
+        '<meta name="twitter:card" content="summary_large_image">',
+    ])
+    s = s.replace("<title>每日计划</title>", meta, 1)
     if preview:
         s = s.replace("(function lock() {", "(function lock() { return;", 1)
     return s
@@ -75,6 +90,8 @@ def catalog():
     return f"""<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>每日计划 · 全部款式</title>
+<meta name="description" content="手机全屏打勾的每日清单，一键生成小红书卡片。8 款风格各自独立。">
+<meta property="og:title" content="每日计划 · 8 款"><meta property="og:image" content="{SITE}previews/songhua.jpg">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
@@ -93,6 +110,9 @@ h1{{font-family:"Noto Serif SC",serif;font-weight:600;font-size:clamp(32px,5vw,5
 .meta b{{font-family:"Noto Serif SC",serif;font-size:17px;letter-spacing:.06em}}
 .meta span:last-child{{color:var(--ink2);font-size:13px}}
 .card:hover b{{text-decoration:underline;text-underline-offset:4px}}
+.buy{{margin-top:64px;border-top:1px solid var(--ink);padding-top:28px;max-width:44em}}
+.buy h2{{font-family:"Noto Serif SC",serif;font-weight:600;font-size:26px;letter-spacing:.1em;margin:0 0 14px}}
+.buy ol{{padding-left:1.2em;display:grid;gap:10px;margin:0}}.buy b{{margin-right:8px}}.buy p{{color:var(--ink2);margin-top:16px}}
 footer{{border-top:1px solid var(--rule);margin-top:56px;padding-top:20px;font-size:12.5px;color:var(--ink3)}}
 </style></head><body><main class="wrap">
 <div class="cap">Daily Plan · 8 Editions</div>
@@ -100,6 +120,15 @@ footer{{border-top:1px solid var(--rule);margin-top:56px;padding-top:20px;font-s
 <p class="lead">手机全屏打勾的每日清单，一键生成 1080×1440 小红书卡片，所有日子围成一个卷筒慢慢转。共 8 款，各自独立，打开需要购买后收到的访问码。</p>
 <div class="grid">{cards}
 </div>
+<section class="buy">
+  <h2>怎么买</h2>
+  <ol>
+    <li><b>选款</b>在小红书店铺「加购物车 / 立即购买」，选一个喜欢的款式（8 款各自独立）。</li>
+    <li><b>收钥匙</b>付款后会收到一条消息：进入Y世界大门的星星密钥，和这一款的网址。</li>
+    <li><b>开门</b>打开网址，输入密钥。输对一次，这台设备以后都不用再输；点「添加到主屏幕」就能像 App 一样用。</li>
+  </ol>
+  <p>还没想好？点开任意一款，在钥匙页点「先试试看」，可以完整玩一遍（导出的图带水印）。</p>
+</section>
 <footer>© 黄鈺茜 Youcy Huang · 数据只存在你自己的设备上</footer>
 </main></body></html>
 """
