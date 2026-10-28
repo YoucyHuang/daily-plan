@@ -348,14 +348,18 @@
 
   .swatch[hidden] { display:none; }
   /* 访问码锁 */
-  .lock { position:fixed; inset:0; z-index:500; display:grid; place-items:center; padding:24px; background:var(--paper); }
-  .lock-box { width:min(100%, 360px); text-align:center; }
-  .lock-box .brand-mark { margin:0 auto 18px; width:56px; height:56px; font-size:30px; border-radius:14px; }
-  .lock-box h2 { font-family:var(--font-body); font-weight:500; font-size:24px; letter-spacing:.06em; }
-  .lock-box p { color:var(--ink-2); font-size:14px; line-height:1.7; margin:8px 0 22px; }
-  .lock-box .field { text-align:center; font-size:18px; letter-spacing:.18em; text-transform:uppercase; min-height:50px; }
-  .lock-box .btn { width:100%; margin-top:10px; min-height:48px; font-size:15px; }
-  .lock-err { color:var(--clay); font-size:13px; min-height:1.6em; margin-top:10px; }
+  .lock { position:fixed; inset:0; z-index:500; display:grid; place-items:center; padding:24px; background:var(--paper); overflow:hidden; }
+  .lock-bg { position:absolute; inset:0; overflow:hidden; }
+  .lock-bg .page { position:absolute; left:50%; top:50%; transform-origin:center; pointer-events:none; filter:blur(2px) saturate(1.05); }
+  .lock-bg::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.12); }
+  .lock-box { position:relative; width:min(100%, 380px); text-align:center; padding:32px 28px 26px; }
+  .lock-mark { width:56px; height:56px; margin:0 auto 14px; display:grid; place-items:center; font-size:28px; font-weight:700; }
+  .lock-name { font-size:13px; letter-spacing:.14em; margin-bottom:6px; }
+  .lock-box h2 { font-weight:500; line-height:1.25; margin:0; }
+  .lock-box p { font-size:14px; line-height:1.7; margin:10px 0 20px; }
+  .lock-box .field { width:100%; text-align:center; font-size:18px; letter-spacing:.16em; text-transform:uppercase; min-height:52px; }
+  .lock-box .btn { width:100%; margin-top:12px; min-height:50px; font-size:16px; cursor:pointer; }
+  .lock-err { font-size:13px; min-height:1.6em; margin-top:10px; }
 
   .t-archive { grid-column:1 / -1; min-height:48px; text-decoration:none; font-size:15px; letter-spacing:.04em; }
 
@@ -2189,34 +2193,78 @@
   /* 分享 ?install=1 的链接：打开就直接弹出添加步骤 */
   if (new URLSearchParams(location.search).has("install") && !standalone) setTimeout(doInstall, 400);
 
-  /* ───────────────── 访问码 ─────────────────
-     每款产品一个码。网页里只存「款名:码」的 SHA-256 摘要，码本身不在代码里。
+  /* 钥匙页的样子跟着本款主题走：背后铺这一款的卡片画面，面板用这一款的字体、颜色和边框 */
+  const LOCK_UI = {
+    forest:   { panel: "background:rgba(243,238,229,.94);border:1px solid rgba(42,40,36,.25);border-radius:4px;outline:1px solid rgba(42,40,36,.12);outline-offset:-8px",
+                title: "font-family:var(--font-title);font-size:34px;letter-spacing:.2em;color:#2a2824", sub: "color:#6b655c",
+                input: "background:#fbf8f2;border:1px solid #c9bfae;border-radius:2px;color:#2a2824", btn: "background:#22382d;color:#eae4d3;border-radius:2px;border:0", err: "#b4654a", mark: "border:1.5px solid #c9b37c;color:#c9b37c;background:transparent;border-radius:3px" },
+    lwf:      { panel: "background:rgba(255,255,255,.55);backdrop-filter:blur(10px);border:3px solid #1f44a8;border-radius:34px",
+                title: "font-family:'Gochi Hand',cursive;font-size:44px;color:#1f44a8", sub: "color:#1f44a8;opacity:.8",
+                input: "background:rgba(255,255,255,.8);border:3px solid #1f44a8;border-radius:18px;color:#1f44a8", btn: "background:#e0457b;color:#fff;border:3px solid #1f44a8;border-radius:18px;font-family:'Gochi Hand',cursive;font-size:24px", err: "#e0457b", mark: "background:#1f44a8;color:#fff;border-radius:16px" },
+    y2k:      { panel: "background:rgba(255,255,255,.78);border:4px solid #1c1c4a;border-radius:24px;box-shadow:10px 10px 0 #1c1c4a",
+                title: "font-family:'Rubik Mono One',sans-serif;font-size:26px;color:#1c1c4a;line-height:1.3", sub: "color:#1c1c4a;font-family:'VT323',monospace;font-size:20px",
+                input: "background:#fff;border:3px solid #1c1c4a;border-radius:99px;color:#1c1c4a;font-family:'VT323',monospace;font-size:26px", btn: "background:linear-gradient(180deg,#ffb0e0,#ff5fb8);color:#fff;border:3px solid #1c1c4a;border-radius:99px;font-weight:700", err: "#ff2e88", mark: "background:linear-gradient(135deg,#8ec5ff,#ffa8dc);color:#1c1c4a;border:3px solid #1c1c4a;border-radius:14px" },
+    bauhaus:  { panel: "background:#fff;border:6px solid #1a1a1a;border-radius:0",
+                title: "font-family:'Jost',sans-serif;font-weight:700;font-size:34px;letter-spacing:-.01em;color:#1a1a1a", sub: "color:#1a1a1a",
+                input: "background:#fff;border:3px solid #1a1a1a;border-radius:0;color:#1a1a1a;font-family:'Jost',sans-serif;font-weight:700", btn: "background:#d7352a;color:#fff;border:3px solid #1a1a1a;border-radius:0;font-family:'Jost',sans-serif;font-weight:700;letter-spacing:.1em", err: "#d7352a", mark: "background:#1f4e9c;color:#fff;border-radius:50%" },
+    songyuan: { panel: "background:rgba(230,212,170,.94);border:2px solid #4a3d29;outline:1px solid #e2c27a;outline-offset:-8px;border-radius:0",
+                title: "font-family:'Noto Serif SC',serif;font-weight:600;font-size:30px;letter-spacing:.24em;color:#2e2618", sub: "color:#6e5b3c",
+                input: "background:rgba(255,250,236,.6);border:1px solid #8c7954;border-radius:0;color:#2e2618", btn: "background:transparent;color:#b0493a;border:1.6px solid #b0493a;border-radius:3px;font-family:'Ma Shan Zheng',serif;font-size:22px;letter-spacing:.3em", err: "#b0493a", mark: "background:transparent;border:1.6px solid #b0493a;color:#b0493a;border-radius:3px;font-family:'Ma Shan Zheng',serif" },
+    business: { panel: "background:rgba(11,13,16,.88);border:1px solid rgba(200,169,106,.6);border-radius:2px",
+                title: "font-family:'Cormorant Garamond',serif;font-weight:600;font-size:34px;letter-spacing:.06em;background:linear-gradient(105deg,#7a5c26,#e9d18f 30%,#a88437 55%,#fff1c4 70%,#8a6a2c);-webkit-background-clip:text;background-clip:text;color:transparent", sub: "color:#9aa1aa",
+                input: "background:#14171c;border:1px solid rgba(200,169,106,.5);border-radius:2px;color:#ebe8e1;font-family:'Cormorant Garamond',serif;font-size:22px", btn: "background:linear-gradient(105deg,#7a5c26,#e9d18f 30%,#a88437 55%,#fff1c4 70%,#8a6a2c);color:#0b0d10;border:0;border-radius:2px;font-weight:700;letter-spacing:.2em", err: "#e9d18f", mark: "background:#0b0d10;border:1.5px solid #c8a96a;color:#e9d18f;border-radius:50%" },
+    autumn:   { panel: "background:rgba(242,239,233,.92);border:0;border-radius:0;box-shadow:0 0 0 14px rgba(242,239,233,.6)",
+                title: "font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:34px;color:#2a1218", sub: "color:#2a1218;font-family:'Jost',sans-serif",
+                input: "background:#fff;border:2.5px solid #2a1218;border-radius:99px;color:#2a1218;font-family:'Jost',sans-serif;font-weight:500", btn: "background:#2a1218;color:#f2efe9;border:0;border-radius:99px;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.2em", err: "#ff3f66", mark: "background:repeating-radial-gradient(circle,#ff3f66 0 3px,#2fe3c8 3px 6px,#e48a92 6px 9px);color:#fff;border-radius:50%" },
+    comic:    { panel: "background:#fff;border:7px solid #111;border-radius:0;box-shadow:12px 12px 0 #111",
+                title: "font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:34px;color:#111", sub: "color:#111;font-family:'Bangers',sans-serif;font-size:22px;letter-spacing:.04em",
+                input: "background:#fff3a0;border:5px solid #111;border-radius:0;color:#111;font-family:'Bangers',sans-serif;font-size:28px", btn: "background:#e23b2e;color:#fff;border:5px solid #111;border-radius:0;font-family:'Bangers',sans-serif;font-size:30px;letter-spacing:.06em", err: "#e23b2e", mark: "background:#f7d21e;border:5px solid #111;color:#111;border-radius:0" },
+  };
+
+  /* ───────────────── 钥匙（访问码） ─────────────────
+     每款可以有很多把钥匙（平台卡密自动发货时一单一把）。网页里只存每把「款名:钥匙」的 SHA-256 摘要。
      输对一次就记在这台设备上，以后不用再输。 */
   const UNLOCK_KEY = "dailyplan.unlock." + PRODUCT.slug;
+  const KEY_HASHES = PRODUCT.hashes || [PRODUCT.hash];
   async function sha256(t) {
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
     return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
   (function lock() {
     let ok = false;
-    try { ok = localStorage.getItem(UNLOCK_KEY) === PRODUCT.hash; } catch (e) {}
+    try { ok = KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY)); } catch (e) {}
     if (ok) return;
+    const ui = LOCK_UI[CLASSIC.includes(DEFAULT_THEME) ? "forest" : DEFAULT_THEME] || LOCK_UI.forest;
     const el = document.createElement("div");
     el.className = "lock";
-    el.innerHTML = `<form class="lock-box"><div class="brand-mark">日</div><h2>${esc(PRODUCT.name)}</h2>
-      <p>进入Y世界的钥匙🔑<br>输对一次，这台设备以后都不用再输。</p>
-      <input class="field" name="code" autocomplete="off" autocapitalize="characters" placeholder="输入钥匙" required>
-      <button class="btn primary" type="submit">解锁</button><div class="lock-err"></div></form>`;
+    el.innerHTML = `<div class="lock-bg" aria-hidden="true"></div>
+      <form class="lock-box" style="${ui.panel}">
+      <div class="lock-mark" style="${ui.mark}">Y</div>
+      <div class="lock-name" style="${ui.sub}">${esc(PRODUCT.name)}</div>
+      <h2 style="${ui.title}">进入Y世界的钥匙🔑</h2>
+      <p style="${ui.sub}">输入你收到的星星密钥，输对一次，这台设备以后都不用再输。</p>
+      <input class="field" name="code" autocomplete="off" autocapitalize="characters" placeholder="输入星星密钥" required style="${ui.input}">
+      <button class="btn" type="submit" style="${ui.btn}">打开大门</button><div class="lock-err" style="color:${ui.err}"></div></form>`;
     document.body.appendChild(el);
+    /* 背景：等主程序把这一款的卡片画好，复制一份铺满屏幕 */
+    setTimeout(() => {
+      const bg = el.querySelector(".lock-bg"), card = page.cloneNode(true);
+      card.removeAttribute("id"); card.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+      card.querySelectorAll("[contenteditable]").forEach((n) => n.removeAttribute("contenteditable"));
+      bg.appendChild(card);
+      const fitBg = () => { const s = Math.max(innerWidth / 1080, innerHeight / 1440); card.style.transform = `translate(-50%,-50%) scale(${s})`; };
+      fitBg(); addEventListener("resize", fitBg);
+    }, 0);
     const form = el.querySelector("form");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const code = form.code.value.trim().toUpperCase().replace(/\s+/g, "");
-      if ((await sha256(PRODUCT.slug + ":" + code)) === PRODUCT.hash) {
-        try { localStorage.setItem(UNLOCK_KEY, PRODUCT.hash); } catch (e2) {}
+      const code = form.code.value.trim().toUpperCase().replace(/[\s"'“”「」:：]+/g, "");
+      const h = await sha256(PRODUCT.slug + ":" + code);
+      if (KEY_HASHES.includes(h)) {
+        try { localStorage.setItem(UNLOCK_KEY, h); } catch (e2) {}
         el.remove();
       } else {
-        el.querySelector(".lock-err").textContent = "钥匙不对，再核对一下收到的那串字母和数字。";
+        el.querySelector(".lock-err").textContent = "密钥不对，再核对一下收到的那串字母和数字。";
       }
     });
   })();

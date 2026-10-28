@@ -8,7 +8,7 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 6   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 7   # 改了代码就加 1，手机上装好的版本会自动换新
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
 STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")
@@ -17,7 +17,7 @@ STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")
 def page(prod, up, preview):
     s = TPL.replace("__MASTER_HASH__", STUDIO["hash"])
     if prod["slug"] != "studio":
-        cfg = {k: prod[k] for k in ("slug", "name", "themes", "hash")}
+        cfg = {k: prod[k] for k in ("slug", "name", "themes", "hash", "hashes") if k in prod}
         s = s.replace("<!--PRODUCT-->", "<script>window.PRODUCT=" + json.dumps(cfg, ensure_ascii=False) + "</script>")
     s = s.replace('href="icon-192.png"', f'href="{up}icon-192.png"')
     s = s.replace('href="apple-touch-icon.png"', f'href="{up}apple-touch-icon.png"')
