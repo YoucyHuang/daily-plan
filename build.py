@@ -8,7 +8,7 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 5   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 6   # 改了代码就加 1，手机上装好的版本会自动换新
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
 STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")

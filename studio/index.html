@@ -2204,8 +2204,8 @@
     const el = document.createElement("div");
     el.className = "lock";
     el.innerHTML = `<form class="lock-box"><div class="brand-mark">日</div><h2>${esc(PRODUCT.name)}</h2>
-      <p>请输入购买后收到的访问码。<br>输对一次，这台设备以后都不用再输。</p>
-      <input class="field" name="code" autocomplete="off" autocapitalize="characters" placeholder="访问码" required>
+      <p>进入Y世界的钥匙🔑<br>输对一次，这台设备以后都不用再输。</p>
+      <input class="field" name="code" autocomplete="off" autocapitalize="characters" placeholder="输入钥匙" required>
       <button class="btn primary" type="submit">解锁</button><div class="lock-err"></div></form>`;
     document.body.appendChild(el);
     const form = el.querySelector("form");
@@ -2216,7 +2216,7 @@
         try { localStorage.setItem(UNLOCK_KEY, PRODUCT.hash); } catch (e2) {}
         el.remove();
       } else {
-        el.querySelector(".lock-err").textContent = "访问码不对，再检查一下大小写和字母 O / 数字 0。";
+        el.querySelector(".lock-err").textContent = "钥匙不对，再核对一下收到的那串字母和数字。";
       }
     });
   })();
