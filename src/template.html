@@ -28,11 +28,8 @@
   ══════════════════════════════════════════════════════════════════
 -->
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@200;300;400;500;600&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
-<!-- 设计主题用的字体（均为 SIL OFL 开源可商用） -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=EB+Garamond:ital,wght@0,400;1,400&family=Gochi+Hand&family=Rubik+Mono+One&family=VT323&family=Jost:wght@500;700&family=Bangers&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/fonts.css">
+<!-- 字体都放在本站 fonts/ 里（国内打不开 Google Fonts），均为 SIL OFL 开源可商用 -->
 
 <!-- PWA：可安装 + 主屏图标 -->
 <meta name="theme-color" content="#f3eee5" media="(prefers-color-scheme: light)">
@@ -1981,8 +1978,10 @@
   const fontCache = { css: null, data: new Map() };
   async function googleFontFaces() {
     if (!fontCache.css) {
-      const hrefs = [...document.querySelectorAll('link[href*="fonts.googleapis.com/css"]')].map((l) => l.href);
-      const texts = await Promise.all(hrefs.map((h) => fetch(h).then((r) => r.text()).catch(() => "")));
+      /* 字体放在本站 fonts/ 里；CSS 里的 url 是相对 CSS 文件的，先换成绝对地址 */
+      const hrefs = [...document.querySelectorAll('link[href*="fonts.css"]')].map((l) => l.href);
+      const texts = await Promise.all(hrefs.map((h) => fetch(h).then((r) => r.text())
+        .then((t) => t.replace(/url\(([^)]+)\)/g, (m, u) => `url(${new URL(u.replace(/['"]/g, ""), h).href})`)).catch(() => "")));
       fontCache.css = texts.join("\n").match(/@font-face\s*{[^}]*}/g) || [];
     }
     return fontCache.css.map((block) => {

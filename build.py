@@ -8,7 +8,7 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 7   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 8   # 改了代码就加 1，手机上装好的版本会自动换新
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
 STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")
@@ -22,6 +22,7 @@ def page(prod, up, preview):
     s = s.replace('href="icon-192.png"', f'href="{up}icon-192.png"')
     s = s.replace('href="apple-touch-icon.png"', f'href="{up}apple-touch-icon.png"')
     s = s.replace('src="html-to-image.js"', f'src="{up}html-to-image.js"')
+    s = s.replace('href="fonts/fonts.css"', f'href="{up}fonts/fonts.css"')
     s = s.replace('content="每日计划">', f'content="{html.escape(prod["short"])}">', 1)
     if preview:
         s = s.replace("(function lock() {", "(function lock() { return;", 1)
@@ -41,7 +42,7 @@ def manifest(prod, up):
 
 
 def worker(prod, up):
-    assets = ["./", "./index.html", "./manifest.json", f"{up}html-to-image.js", f"{up}icon-192.png", f"{up}icon-512.png"]
+    assets = ["./", "./index.html", "./manifest.json", f"{up}html-to-image.js", f"{up}fonts/fonts.css", f"{up}icon-192.png", f"{up}icon-512.png"]
     return f"""/* {prod['name']} · 离线缓存（build.py 生成） */
 const CACHE = "daily-plan-{prod['slug']}-v{VERSION}";
 const ASSETS = {json.dumps(assets)};
@@ -56,7 +57,11 @@ self.addEventListener("fetch", (e) => {{
       .catch(() => caches.match("./index.html")));
     return;
   }}
-  e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request)));
+  /* 字体分片用到一片存一片，下次断网也能显示 */
+  e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request).then((r) => {{
+    if (r.ok && e.request.url.includes("/fonts/files/")) {{ const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); }}
+    return r;
+  }})));
 }});
 """
 
@@ -71,7 +76,7 @@ def catalog():
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>每日计划 · 全部款式</title>
 <link rel="icon" type="image/png" href="icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=EB+Garamond:ital@0;1&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
 :root{{--bg:#faf9f5;--ink:#191817;--ink2:#5e5a55;--ink3:#9a958e;--rule:#e5e1db}}
 @media (prefers-color-scheme:dark){{:root:not([data-theme="light"]){{--bg:#131211;--ink:#eeeae4;--ink2:#aba59c;--ink3:#77726b;--rule:#2c2a27}}}}
@@ -113,6 +118,7 @@ def build(out, preview=False):
     if out != ROOT:
         for f in ("html-to-image.js", "icon-192.png", "icon-512.png", "apple-touch-icon.png"):
             shutil.copy(os.path.join(ROOT, f), os.path.join(out, f))
+        shutil.copytree(os.path.join(ROOT, "fonts"), os.path.join(out, "fonts"), dirs_exist_ok=True)
     print("built →", out)
 
 
