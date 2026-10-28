@@ -1,0 +1,94 @@
+[
+  {
+    "slug": "classic",
+    "name": "每日计划 · 经典",
+    "short": "每日计划",
+    "themes": [
+      "forest",
+      "ocean",
+      "morandi",
+      "paper",
+      "night"
+    ],
+    "tagline": "森林、海洋、莫兰迪、宣纸、夜墨 5 个经典配色，可放自己的背景照片",
+    "hash": "7ca1ea60a12ef291dbd56edd05c435d583b0cb4e26e378d11c1d51a36b0a9563"
+  },
+  {
+    "slug": "weird",
+    "name": "每日计划 · Little Weird Friends",
+    "short": "怪朋友计划",
+    "themes": [
+      "lwf"
+    ],
+    "tagline": "雾光晕、手写马克笔字、白色涂鸦，7 套配色",
+    "hash": "d8d2e701266147b35bfc12debf9e9d1f32d8946cf37076eb105b4144bdfe7417"
+  },
+  {
+    "slug": "y2k",
+    "name": "每日计划 · Y2K 千禧",
+    "short": "Y2K 计划",
+    "themes": [
+      "y2k"
+    ],
+    "tagline": "镭射渐变、铬银立体字、复古电脑窗口，7 套配色",
+    "hash": "3a95b0fdf6614c7479b09777b701e9c1f74b3bfa194f1c62e6cd991a10f4535d"
+  },
+  {
+    "slug": "bauhaus",
+    "name": "每日计划 · 包豪斯",
+    "short": "包豪斯计划",
+    "themes": [
+      "bauhaus"
+    ],
+    "tagline": "纯白底与红黄蓝几何，男女都能用，7 套配色",
+    "hash": "77d2b304393f190171d0edf5a150335ace54b32a1f6745c175c5aa41e4ee9deb"
+  },
+  {
+    "slug": "songhua",
+    "name": "每日计划 · 宋人花鸟",
+    "short": "宋人花鸟",
+    "themes": [
+      "songyuan"
+    ],
+    "tagline": "古绢底、勾勒填色的折枝花与蝴蝶、绫边锦纹，7 套配色",
+    "hash": "305dc6b6041aa85fbfabc00fb30d28635dbc96ab04add640fb46f48b0281e988"
+  },
+  {
+    "slug": "calibre",
+    "name": "每日计划 · 机芯",
+    "short": "机芯计划",
+    "themes": [
+      "business"
+    ],
+    "tagline": "冷峻深色、表盘刻度、烫金烫银，7 套配色",
+    "hash": "cde9d072a029fc047f3fc3047c7ca6d0b1a6b135ae9efd6602aa7e9ecb8afca2"
+  },
+  {
+    "slug": "ripple",
+    "name": "每日计划 · 涟漪",
+    "short": "涟漪计划",
+    "themes": [
+      "autumn"
+    ],
+    "tagline": "波纹干涉与彩色颗粒的版画质感，7 套配色",
+    "hash": "43fe2c9574a2485d35603c5626cc35f48abd6fbe15b87bfa786722e875ae7498"
+  },
+  {
+    "slug": "pop",
+    "name": "每日计划 · 波普网点",
+    "short": "波普计划",
+    "themes": [
+      "comic"
+    ],
+    "tagline": "本戴点、粗黑勾线、流泪的大眼睛，7 种不同构图",
+    "hash": "e09cb841d6861cf519dae89423b4fb66f7da269c9c1675e4646e13224bf814b0"
+  },
+  {
+    "slug": "studio",
+    "name": "每日计划 · 全部主题（主理人）",
+    "short": "每日计划总控",
+    "themes": null,
+    "tagline": "主理人自用：全部 12 个主题，用来做宣传图",
+    "hash": "04511be564a4028548a542af3935eda4457cc322ed7fc28648af69abfbc2f630"
+  }
+]
