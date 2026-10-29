@@ -1,22 +1,22 @@
 {
-  "name": "每日计划 · 机芯",
-  "short_name": "机芯计划",
-  "description": "冷峻深色、表盘刻度、烫金烫银，7 套配色",
+  "name": "每日计划 · Y世界",
+  "short_name": "Y世界计划",
+  "description": "像做游戏一样过每一天：打勾得星星、攒连胜、做任务、收集徽章，一键生成小红书卡片。",
   "id": "./",
   "start_url": "./index.html#today",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f3eee5",
-  "theme_color": "#f3eee5",
+  "background_color": "#c8d5f4",
+  "theme_color": "#c8d5f4",
   "icons": [
     {
-      "src": "../../icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "../../icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

@@ -1,9 +1,9 @@
-/* 每日计划 · 全部主题（主理人） · 离线缓存（build.py 生成） */
-const CACHE = "daily-plan-studio-v9";
+/* 每日计划 · 离线缓存（build.py 生成） */
+const CACHE = "daily-plan-studio-v10";
 const ASSETS = ["./", "./index.html", "./manifest.json", "../html-to-image.js", "../fonts/fonts.css", "../icon-192.png", "../icon-512.png"];
 self.addEventListener("install", (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys()
-  .then((ks) => Promise.all(ks.filter((k) => k.startsWith("daily-plan-studio-") && k !== CACHE).map((k) => caches.delete(k))))
+  .then((ks) => Promise.all(ks.filter((k) => /^daily-plan-/.test(k) && k !== CACHE && (k.startsWith("daily-plan-studio-") || /^daily-plan-v\d+$/.test(k))).map((k) => caches.delete(k))))
   .then(() => self.clients.claim())));
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== self.location.origin) return;

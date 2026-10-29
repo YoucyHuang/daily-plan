@@ -8,7 +8,8 @@
 <script>
   /* 在页面画出来之前就套上这一款的界面皮肤，避免先闪一下经典款 */
   (function () {
-    var t = (window.PRODUCT && window.PRODUCT.themes || [])[0];
+    var P = window.PRODUCT || {}, t = (P.themes || [])[0];
+    if (P.themes && P.themes.length > 1) { try { t = localStorage.getItem("dailyplan.lastTheme") || P.defaultTheme; } catch (e) { t = P.defaultTheme; } }
     var classic = ["forest", "ocean", "morandi", "paper", "night"];
     if (t && classic.indexOf(t) < 0) document.documentElement.setAttribute("data-skin", t);
   })();
@@ -728,6 +729,151 @@
   :root[data-skin] .t-item.is-check .t-text { text-decoration-color:var(--sage); }
   :root[data-skin] .chip { color:var(--ink-3); }
 
+  /* ═════════════════ 游戏化界面 ═════════════════ */
+  .game-hud { display:flex; align-items:center; gap:14px; margin:2px 0 14px; }
+  .buddy { position:relative; flex:none; width:88px; height:82px; padding:0; border:0; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .buddy svg { width:100%; height:100%; overflow:visible; transform:scale(var(--grow, 1)); transform-origin:50% 95%; transition:transform .4s; }
+  .buddy .b-body { fill:var(--buddy, color-mix(in srgb, var(--sage) 38%, #fff)); stroke:var(--ink-1); stroke-width:3.2; }
+  .buddy .b-ant, .buddy .b-arm { fill:none; stroke:var(--ink-1); stroke-width:3.2; stroke-linecap:round; }
+  .buddy .b-tip { fill:#ffc21a; stroke:var(--ink-1); stroke-width:2.4; }
+  .buddy .b-shadow { fill:rgba(0,0,0,.12); }
+  .buddy .b-blush { fill:#ff8fb1; opacity:.55; }
+  .buddy .m { display:none; fill:var(--ink-1); stroke:var(--ink-1); stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+  .buddy .m path { fill:none; }
+  .buddy .m .hl { fill:#fff; stroke:none; }
+  .buddy .m text { font:700 15px/1 "Jost", sans-serif; stroke:none; fill:var(--ink-3); }
+  .buddy .m .st { fill:#ffc21a; stroke-width:2; }
+  .buddy .m .mo { fill:#ff6b8b; }
+  .buddy[data-mood="sleep"] .m-sleep, .buddy[data-mood="ok"] .m-ok, .buddy[data-mood="first"] .m-first,
+  .buddy[data-mood="party"] .m-party, .buddy[data-mood="worry"] .m-worry, .buddy[data-mood="cross"] .m-cross { display:inline; }
+  .buddy[data-mood="sleep"] svg { animation:breathe 3.2s ease-in-out infinite; }
+  .buddy[data-mood="party"] svg { animation:wiggle .6s ease-in-out 3; }
+  .buddy.hop svg { animation:hop .55s cubic-bezier(.3,.6,.4,1.4); }
+  @keyframes breathe { 50% { transform:scale(var(--grow,1)) scaleY(.96); } }
+  @keyframes hop { 40% { transform:translateY(-14px) scale(var(--grow,1)) scaleY(1.06); } 70% { transform:scale(var(--grow,1)) scaleY(.92); } }
+  @keyframes wiggle { 25% { transform:scale(var(--grow,1)) rotate(-8deg); } 75% { transform:scale(var(--grow,1)) rotate(8deg); } }
+  .hud-say { position:relative; justify-self:start; max-width:100%; padding:5px 12px; border-radius:4px 14px 14px 14px; background:var(--surface); border:1.5px solid var(--rule);
+    color:var(--ink-1); font-size:13px; line-height:1.4; }
+  .hud-say.show { animation:sayIn .3s cubic-bezier(.3,.7,.3,1.4); }
+  @keyframes sayIn { from { transform:translateX(-6px) scale(.92); opacity:.3; } }
+  .buddy-bubble-unused { position:absolute; left:84px; top:-6px; z-index:3; width:max-content; max-width:min(56vw, 240px); padding:7px 12px; border-radius:14px 14px 14px 4px;
+    background:var(--surface); color:var(--ink-1); border:1.5px solid var(--rule); box-shadow:var(--shadow); font-size:13px; line-height:1.45; text-align:left;
+    opacity:0; transform:translateY(6px) scale(.9); transform-origin:0 100%; transition:opacity .2s, transform .25s; pointer-events:none; }
+  .buddy-bubble.show { opacity:1; transform:none; }
+  .hud-main { flex:1; min-width:0; display:grid; gap:8px; }
+  .hud-pills { display:flex; gap:6px; flex-wrap:wrap; }
+  .hud-pill { display:inline-flex; align-items:center; gap:5px; padding:5px 10px 5px 7px; border-radius:99px; background:var(--surface); border:1.5px solid var(--rule); color:var(--ink-1); font:inherit; cursor:default; }
+  button.hud-pill { cursor:pointer; }
+  .hud-pill b { font-family:"Jost", var(--font-ui); font-size:17px; font-weight:700; line-height:1; }
+  .hud-pill small { font-size:11px; color:var(--ink-3); }
+  .hud-pill .hi { width:20px; height:20px; display:inline-block; background-repeat:no-repeat; background-position:center; background-size:contain; }
+  #hudStreakPill .hi { background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.5c.6 3.2 4.8 5.3 4.8 10.2A4.8 4.8 0 0 1 12 17.5a4.8 4.8 0 0 1-4.8-4.8c0-2 1-3.4 2.1-4.3-.1 1.8.7 3 1.9 3.4-.6-3 .3-6.2.8-9.3Z' fill='%23ff7a1a'/><path d='M12 21.5a3.4 3.4 0 0 1-3.4-3.4c0-2 1.8-3 2.6-4.6.4 1.4 2.1 2 3 3.4a3.4 3.4 0 0 1-2.2 4.6Z' fill='%23ffcf3a'/></svg>"); }
+  #hudStreakPill.cold .hi { filter:grayscale(1); opacity:.55; }
+  .hi-star { background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.6l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8Z' fill='%23ffc21a' stroke='%23e59a00' stroke-width='1.2' stroke-linejoin='round'/></svg>"); }
+  .hi-medal { background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M7 2h4l1.5 5H8.5ZM13 2h4l-1.5 5H11.5Z' fill='%23e0457b'/><circle cx='12' cy='14.5' r='6.5' fill='%23ffc21a' stroke='%23e59a00' stroke-width='1.2'/></svg>"); }
+  .hud-pill.pop { animation:pop .4s cubic-bezier(.3,.6,.4,1.6); }
+  @keyframes pop { 50% { transform:scale(1.22); } }
+  .hud-level { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; font-size:12px; color:var(--ink-2); }
+  .hud-level span { font-weight:600; color:var(--ink-1); white-space:nowrap; }
+  .hud-bar { height:8px; border-radius:99px; background:var(--surface-2); overflow:hidden; }
+  .hud-bar i { display:block; height:100%; width:0; border-radius:99px; background:linear-gradient(90deg, #ffc21a, #ff8a1a); transition:width .6s cubic-bezier(.3,.7,.3,1); }
+  .quests { margin-bottom:16px; padding:10px 14px 8px; border-radius:16px; background:var(--surface); border:1.5px solid var(--rule); }
+  .q-head { display:flex; justify-content:space-between; align-items:baseline; font-size:13px; font-weight:600; color:var(--ink-1); margin-bottom:4px; }
+  .q-head small { color:var(--ink-3); font-weight:400; }
+  #questList { list-style:none; display:grid; gap:2px; }
+  #questList li { display:flex; align-items:center; gap:10px; font-size:14px; color:var(--ink-2); padding:4px 0; }
+  #questList li em { margin-left:auto; font-style:normal; font-size:12px; color:#e59a00; font-weight:600; }
+  #questList .qd { flex:none; width:20px; height:20px; border-radius:6px; border:1.8px solid var(--ink-3); display:grid; place-items:center; font-size:13px; color:#fff; }
+  #questList li.ok { color:var(--ink-3); text-decoration:line-through; }
+  #questList li.ok .qd { background:#36c9a0; border-color:#36c9a0; }
+
+  /* 滑动打勾 */
+  .t-item { touch-action:pan-y; transition:transform .25s cubic-bezier(.3,.7,.3,1), background .2s, border-color .2s; position:relative; }
+  .t-item.sw-right { background:#d9f7ea !important; border-color:#36c9a0 !important; }
+  .t-item.sw-left { background:#ffe3e3 !important; border-color:#ff7a7a !important; }
+  .t-check[data-state="check"] { animation:checkPop .35s cubic-bezier(.3,.6,.4,1.6); }
+  @keyframes checkPop { 50% { transform:scale(1.25); } }
+
+  /* 飞星 / +10 / 彩纸 / 提示条 */
+  .fx-star { position:fixed; z-index:400; width:26px; height:26px; pointer-events:none; }
+  .fx-star svg { width:100%; height:100%; display:block; }
+  .fx-plus { position:fixed; z-index:401; transform:translate(-50%,-100%); pointer-events:none; font:800 20px/1 "Jost", sans-serif; color:#e59a00; text-shadow:0 2px 0 #fff;
+    animation:plus .9s ease-out forwards; }
+  @keyframes plus { to { transform:translate(-50%,-260%); opacity:0; } }
+  .fx-confetti { position:fixed; inset:0; width:100vw; height:100vh; z-index:399; pointer-events:none; }
+  .toasts { position:fixed; left:50%; top:calc(12px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:402; display:grid; gap:8px; width:min(92vw, 380px); pointer-events:none; }
+  .fx-toast { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:16px; background:var(--surface); color:var(--ink-1); border:1.5px solid var(--rule);
+    box-shadow:var(--shadow-lg); animation:tin .35s cubic-bezier(.3,.7,.3,1.3); }
+  .fx-toast.out { animation:tout .4s ease-in forwards; }
+  .fx-toast .ti { flex:none; width:34px; height:34px; color:var(--ink-1); } .fx-toast .ti svg { width:100%; height:100%; }
+  .fx-toast b { display:block; font-size:14px; } .fx-toast small { display:block; font-size:12px; color:var(--ink-3); }
+  @keyframes tin { from { transform:translateY(-16px) scale(.9); opacity:0; } }
+  @keyframes tout { to { transform:translateY(-16px); opacity:0; } }
+
+  /* 升级 / 徽章 / 解锁 */
+  .lv-dialog { text-align:center; }
+  .lv-burst { width:120px; height:120px; margin:4px auto 10px; display:grid; place-items:center; border-radius:50%;
+    background:radial-gradient(circle, #ffe27a 0 45%, #ffc21a 46% 60%, transparent 61%), repeating-conic-gradient(#ffd23f 0 10deg, transparent 10deg 20deg); animation:spin 8s linear infinite; }
+  .lv-burst b { font:800 30px/1 "Jost", sans-serif; color:#7a4a00; animation:spin 8s linear infinite reverse; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .lv-dialog h3, .badge-dialog h3, .unlock-dialog h3 { font-size:20px; font-weight:700; margin-bottom:6px; }
+  .lv-dialog p { color:var(--ink-2); }
+  .lv-dialog .dialog-actions, .badge-dialog .dialog-actions, .unlock-dialog .dialog-actions { grid-template-columns:1fr; }
+  .badge-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin:10px 0 14px; }
+  .bd { display:grid; justify-items:center; gap:2px; padding:10px 4px; border-radius:14px; background:var(--surface-2); text-align:center; filter:grayscale(1); opacity:.5; }
+  .bd.on { filter:none; opacity:1; background:var(--sage-soft); }
+  .bd span { width:36px; height:36px; } .bd span svg { width:100%; height:100%; }
+  .bd b { font-size:12.5px; } .bd small { font-size:10.5px; color:var(--ink-3); line-height:1.3; }
+  .freeze-row { display:flex; align-items:center; gap:10px; padding:10px; border-radius:14px; border:1.5px solid var(--rule); }
+  .freeze-row div { flex:1; } .freeze-row b { display:block; font-size:14px; } .freeze-row small { font-size:11.5px; color:var(--ink-3); }
+  .fz-ico { flex:none; width:32px; height:32px; background:no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='3' y='5' width='18' height='14' rx='3' fill='%237ec8ff' stroke='%232a7fd4' stroke-width='1.2'/><path d='M12 8v8M8.5 10l7 4M15.5 10l-7 4' stroke='white' stroke-width='1.6' stroke-linecap='round'/></svg>"); }
+  .unlock-dialog img { display:block; width:150px; aspect-ratio:3/4; object-fit:cover; margin:0 auto 12px; border-radius:6px; box-shadow:var(--shadow-lg); }
+  .unlock-dialog { text-align:center; }
+  .un-sub { font-size:13px; color:var(--ink-2); line-height:1.6; margin-bottom:14px; }
+  .unlock-dialog .btn.big:disabled { opacity:.5; cursor:not-allowed; }
+  .un-or { font-size:12px; color:var(--ink-3); margin:10px 0; }
+  .un-code { display:flex; gap:8px; } .un-code .field { text-transform:uppercase; letter-spacing:.1em; text-align:center; }
+  .un-err { min-height:1.5em; font-size:12.5px; color:var(--clay); margin-top:6px; }
+  .swatch { position:relative; }
+  .swatch.locked i { filter:grayscale(.7); opacity:.6; }
+  .sw-lock { position:absolute; top:2px; right:2px; display:inline-flex; align-items:center; gap:2px; padding:1px 5px 1px 3px; border-radius:99px; background:var(--ink-1); color:var(--paper); font:600 10px/1.3 "Jost", sans-serif; }
+  .sw-lock svg { width:10px; height:10px; }
+
+  /* 本周战绩卡（1080×1440，导出用） */
+  .wk-stage { position:fixed; left:-20000px; top:0; }
+  .wk { width:1080px; height:1440px; position:relative; overflow:hidden; padding:96px 96px 80px; box-sizing:border-box;
+    background:linear-gradient(160deg, var(--bg2) 0%, var(--bg) 70%); color:var(--ink); font-family:"Noto Sans SC", sans-serif; }
+  .wk-top { display:flex; justify-content:space-between; font:500 26px/1 "Jost", sans-serif; letter-spacing:.2em; color:var(--ink-soft); }
+  .wk h2 { font-size:120px; font-weight:900; letter-spacing:.04em; margin:56px 0 24px; line-height:1; }
+  .wk-fire { display:flex; align-items:center; gap:24px; }
+  .wk-fire svg { width:150px; height:150px; } .wk-fire b { font:800 190px/1 "Jost", sans-serif; } .wk-fire span { font-size:44px; font-weight:700; }
+  .wk-row { display:grid; grid-template-columns:repeat(3, 1fr); margin-top:36px; border-top:3px solid var(--line); border-bottom:3px solid var(--line); }
+  .wk-row div { padding:28px 0; text-align:center; } .wk-row div + div { border-left:3px solid var(--line-soft); }
+  .wk-row b { display:block; font:800 84px/1.1 "Jost", sans-serif; } .wk-row small { font-size:28px; color:var(--ink-soft); }
+  .wk-days { display:grid; grid-template-columns:repeat(7, 1fr); gap:18px; margin-top:44px; }
+  .wk-days div { display:grid; justify-items:center; gap:12px; }
+  .wk-days i { width:96px; height:96px; border-radius:50%; border:5px solid var(--line); background:conic-gradient(var(--accent) calc(var(--r) * 360deg), transparent 0); }
+  .wk-days small { font-size:26px; color:var(--ink-soft); }
+  .wk-lv { margin-top:40px; font-size:34px; font-weight:700; }
+  .wk-buddy { position:absolute; left:96px; right:96px; bottom:150px; display:flex; align-items:center; gap:28px; }
+  .wk-buddy svg { width:220px; height:200px; flex:none; overflow:visible; }
+  .wk-buddy .b-body { fill:color-mix(in srgb, var(--accent) 40%, #fff); stroke:var(--ink); stroke-width:3.2; }
+  .wk-buddy .b-ant, .wk-buddy .b-arm { fill:none; stroke:var(--ink); stroke-width:3.2; stroke-linecap:round; }
+  .wk-buddy .b-tip { fill:#ffc21a; stroke:var(--ink); stroke-width:2.4; } .wk-buddy .b-shadow { fill:rgba(0,0,0,.12); } .wk-buddy .b-blush { fill:#ff8fb1; opacity:.55; }
+  .wk-buddy .m { display:none; stroke:var(--ink); fill:var(--ink); stroke-width:3.2; stroke-linecap:round; } .wk-buddy .m path { fill:none; } .wk-buddy .m .hl { fill:#fff; stroke:none; }
+  .wk-buddy .m-ok { display:inline; }
+  .wk-buddy p { font-size:40px; font-weight:700; line-height:1.4; }
+  .wk-foot { position:absolute; left:96px; right:96px; bottom:72px; font:500 28px/1 "Jost","Noto Sans SC", sans-serif; letter-spacing:.14em; color:var(--ink-soft); }
+
+  @media (max-width:760px) {
+    .buddy { width:76px; height:72px; }
+    :root .today-wrap .today-head h1, :root[data-skin] .today-wrap .today-head h1 { font-size:24px; margin:0 0 10px; }
+    .today-wrap .today-date { font-size:13px; }
+    .hud-pill { padding:4px 8px 4px 6px; } .hud-pill b { font-size:15px; }
+    .t-hint { display:none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .buddy svg, .lv-burst, .lv-burst b { animation:none !important; } }
+
   @media (prefers-reduced-motion: reduce) {
     * { transition:none !important; }
   }
@@ -765,6 +911,37 @@
           <div><b>装到手机主屏</b><span>像 App 一样全屏打开，断网也能用</span></div>
           <button class="btn primary" id="btnInstallBanner">添加到主屏幕</button>
           <button class="install-x" id="btnInstallDismiss" aria-label="不再提示">×</button>
+        </div>
+        <!-- 游戏状态条：小Y + 连胜 / 星星 / 徽章 + 等级 -->
+        <div class="game-hud">
+          <button class="buddy" id="buddy" data-mood="sleep" aria-label="小Y">
+            <svg viewBox="0 0 120 112" aria-hidden="true">
+              <ellipse class="b-shadow" cx="60" cy="106" rx="32" ry="5"/>
+              <path class="b-ant" d="M60 16C58 8 61 3 68 1"/><circle class="b-tip" cx="69" cy="2" r="5"/>
+              <path class="b-body" d="M60 15C86 13 105 31 104 59C103 85 86 102 60 101C33 100 16 85 16 58C16 32 34 17 60 15Z"/>
+              <path class="b-arm" d="M18 66C10 64 6 70 9 76M102 66C110 64 114 70 111 76"/>
+              <g class="m m-sleep"><path d="M40 55q6 5 12 0M68 55q6 5 12 0"/><path d="M53 74q7 3 14 0"/><text x="88" y="30">z</text><text x="97" y="20">z</text></g>
+              <g class="m m-ok"><circle cx="46" cy="54" r="5.5"/><circle cx="74" cy="54" r="5.5"/><circle class="hl" cx="48" cy="52" r="1.8"/><circle class="hl" cx="76" cy="52" r="1.8"/><path d="M50 71q10 9 20 0"/></g>
+              <g class="m m-first"><circle cx="46" cy="54" r="5.5"/><circle cx="74" cy="54" r="5.5"/><circle class="hl" cx="48" cy="52" r="1.8"/><circle class="hl" cx="76" cy="52" r="1.8"/><path d="M52 70q8 6 16 0"/></g>
+              <g class="m m-party"><path class="st" d="M46 46l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/><path class="st" d="M74 46l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/><path class="mo" d="M47 69q13 16 26 0Z"/></g>
+              <g class="m m-worry"><circle cx="46" cy="56" r="5"/><circle cx="74" cy="56" r="5"/><path d="M38 44l12 4M82 44l-12 4"/><path d="M52 76q8-6 16 0"/></g>
+              <g class="m m-cross"><circle cx="46" cy="55" r="5"/><circle cx="74" cy="55" r="5"/><path d="M53 74h14"/></g>
+              <circle class="b-blush" cx="36" cy="66" r="6"/><circle class="b-blush" cx="84" cy="66" r="6"/>
+            </svg>
+          </button>
+          <div class="hud-main">
+            <div class="hud-say" id="buddyBubble">今天也一起慢慢来吧～</div>
+            <div class="hud-pills">
+              <span class="hud-pill" id="hudStreakPill" title="连胜天数"><i class="hi"></i><b id="hudStreak">0</b><small>天连胜</small></span>
+              <span class="hud-pill" title="星星"><i class="hi hi-star"></i><b id="hudStars">0</b></span>
+              <button class="hud-pill" id="hudBadges" title="徽章和补签卡"><i class="hi hi-medal"></i><b id="hudBadgeN">0</b></button>
+            </div>
+            <div class="hud-level"><span id="hudTitle">Lv.1</span><div class="hud-bar"><i id="hudLv"></i></div><small id="hudLvText"></small></div>
+          </div>
+        </div>
+        <div class="quests">
+          <div class="q-head"><span>今日任务</span><small id="questN">0/3</small></div>
+          <ul id="questList"></ul>
         </div>
         <div class="today-head">
           <div class="today-date" id="tDate"></div>
@@ -907,6 +1084,7 @@
           <p id="arcStats"></p>
         </div>
         <div class="arc-actions">
+          <button class="btn primary" id="btnWeek">本周战绩卡</button>
           <button class="btn" id="btnSpin">暂停旋转</button>
           <button class="btn" id="btnBackup">导出备份</button>
           <button class="btn" id="btnRestore">导入备份</button>
@@ -920,12 +1098,38 @@
     </section>
   </main>
 
+  <!-- 游戏：提示条 / 升级 / 徽章墙 / 解锁主题 -->
+  <div class="toasts" id="toasts"></div>
+  <dialog class="day-dialog lv-dialog" id="lvDialog">
+    <div class="lv-burst"><b id="lvNum">Lv.2</b></div>
+    <h3>升级啦！</h3>
+    <p>你现在是「<span id="lvTitle"></span>」</p>
+    <div class="dialog-actions"><button class="btn primary" id="lvClose">继续</button></div>
+  </dialog>
+  <dialog class="day-dialog badge-dialog" id="badgeDialog">
+    <h3>我的徽章</h3>
+    <div class="badge-grid" id="badgeGrid"></div>
+    <div class="freeze-row"><span class="fz-ico"></span><div><b>补签卡 × <span id="freezeN">1</span></b><small>哪天忘了打卡，会自动帮你保住连胜</small></div><button class="btn" id="buyFreeze">100 星换一张</button></div>
+    <div class="dialog-actions"><button class="btn primary" id="badgeClose">关闭</button></div>
+  </dialog>
+  <dialog class="day-dialog unlock-dialog" id="unlockDialog">
+    <img id="unPreview" alt="">
+    <h3>解锁「<span id="unName"></span>」</h3>
+    <p class="un-sub">每个主题都带 7 套配色。用星星换，或者输入购买时收到的星星密钥。</p>
+    <button class="btn primary big" id="unBuy">用 <span id="unCost">500</span> 星解锁（你有 <span id="unHave">0</span> 星）</button>
+    <div class="un-or">或</div>
+    <div class="un-code"><input class="field" id="unCode" placeholder="输入星星密钥" autocomplete="off" autocapitalize="characters"><button class="btn" id="unRedeem">兑换</button></div>
+    <div class="un-err" id="unErr"></div>
+    <div class="dialog-actions"><button class="btn" id="unClose">先不了</button></div>
+  </dialog>
+
   <!-- 第一次打开的 3 步引导 -->
   <dialog class="day-dialog tour" id="tourDialog">
     <h3>欢迎来到 Y世界 ✦</h3>
     <ol class="tour-steps">
       <li><b>今日</b>写下今天要做的事，做完点圆圈打 ✓，没做成再点一下变 ✗。</li>
       <li><b>制卡</b>一键生成 1080×1440 的小红书卡片：首页（早上发）和尾页（晚上打完勾发），还能换配色、放自己的照片。</li>
+      <li><b>像游戏一样</b>每完成一件得星星，每天打卡攒连胜，完成每日任务、收集徽章；星星可以解锁新主题。</li>
       <li><b>全部清单</b>每一天都会围成一个卷筒慢慢转，点开就能回看。数据只存在你自己的手机里。</li>
     </ol>
     <div class="dialog-actions"><button class="btn primary" id="tourGo">开始今天</button></div>
@@ -983,7 +1187,8 @@
   const THEMES = PRODUCT.themes.filter((t) => ALL_THEMES.includes(t));
   /* 每款自带一份贴合风格的示例清单，第一次打开就是宣传图里的样子 */
   if (PRODUCT.sample) DEFAULT_ITEMS.splice(0, DEFAULT_ITEMS.length, ...PRODUCT.sample.map((text) => ({ text, mark: "empty" })));
-  const DEFAULT_THEME = THEMES[0];
+  const DEFAULT_THEME = THEMES.includes(PRODUCT.defaultTheme) ? PRODUCT.defaultTheme : THEMES[0];
+  if (PRODUCT.samples && PRODUCT.samples[DEFAULT_THEME]) DEFAULT_ITEMS.splice(0, DEFAULT_ITEMS.length, ...PRODUCT.samples[DEFAULT_THEME].map((text) => ({ text, mark: "empty" })));
   let items = [];
   let idSeq = 1;
   let frontMode = true;   // true=首页（全部未勾） false=尾页（显示勾/叉）
@@ -1033,7 +1238,7 @@
     const d = days[k];
     if (!d) return false;
     setItems(d.items);
-    if (THEMES.includes(d.theme)) {
+    if (THEMES.includes(d.theme) && (!window.GAME || GAME.isOwned(d.theme))) {
       if (Number.isInteger(d.pal)) palSel[d.theme] = d.pal;
       setTheme(d.theme, false);
     }
@@ -1081,9 +1286,19 @@
     page.classList.toggle("designed", isDesigned());
     document.body.classList.toggle("designed-theme", isDesigned());
     buildPalList();
+    if (THEMES.length > 1) {   // 免费总版 / 总控台：界面皮肤跟着当前主题
+      if (CLASSIC.includes(name)) document.documentElement.removeAttribute("data-skin");
+      else document.documentElement.setAttribute("data-skin", name);
+      try { localStorage.setItem("dailyplan.lastTheme", name); } catch (e) {}
+    }
+    if (window.GAME) GAME.hud();
     if (save) { render(); if (days[currentKey()]) saveDay(); }
   }
-  swatches.forEach((b) => b.addEventListener("click", () => setTheme(b.dataset.setTheme, true)));
+  swatches.forEach((b) => b.addEventListener("click", () => {
+    const t = b.dataset.setTheme;
+    if (window.GAME && !GAME.isOwned(t)) { GAME.askUnlock(t); return; }
+    setTheme(t, true);
+  }));
   /* 只显示本款产品里有的主题；只有一个设计主题时，整组按钮都收起来，只留「配色方案」 */
   swatches.forEach((b) => { if (!THEMES.includes(b.dataset.setTheme)) b.hidden = true; });
   document.querySelectorAll(".swatches").forEach((g) => {
@@ -1156,11 +1371,17 @@
   }
 
   /* 空白 → ✓ → ✗ → 空白 */
-  function cycleMark(id) {
+  function cycleMark(id, el) {
     const it = items.find((x) => x.id === id);
-    it.mark = MARK_ORDER[(MARK_ORDER.indexOf(it.mark) + 1) % MARK_ORDER.length];
+    setMark(id, MARK_ORDER[(MARK_ORDER.indexOf(it.mark) + 1) % MARK_ORDER.length], el);
+  }
+  function setMark(id, mark, el) {
+    const it = items.find((x) => x.id === id);
+    const prev = it.mark, r = el && el.getBoundingClientRect();
+    it.mark = mark;
     saveDay();
     renderAll();
+    if (window.GAME) GAME.onMark(it, prev, r ? { getBoundingClientRect: () => r } : null);
   }
 
   /* 添加 / 恢复 */
@@ -1190,7 +1411,7 @@
       box.dataset.state = it.mark;
       box.setAttribute("aria-label", "切换完成状态");
       box.innerHTML = CHECK_SVG + CROSS_SVG;
-      box.addEventListener("click", () => cycleMark(it.id));
+      box.addEventListener("click", () => cycleMark(it.id, box));
 
       const text = document.createElement("span");
       text.className = "t-text";
@@ -1211,6 +1432,7 @@
       });
 
       li.append(box, text, del);
+      if (window.GAME) GAME.swipeable(li, it);
       tList.appendChild(li);
     });
 
@@ -1219,6 +1441,7 @@
     $("#tCount").textContent = `${done}/${total}`;
     $("#tArcCount").textContent = Object.keys(days).length;
     $("#tBar").style.width = total ? (done / total * 100) + "%" : "0";
+    if (window.GAME) GAME.hud();
     $("#tMsg").textContent = total && done === total ? "今天的都完成了，好好休息 ✓"
       : total && items.every((x) => x.mark !== "empty") ? "今天结束了。没做成的也没关系，明天再来。" : "";
   }
@@ -1230,6 +1453,7 @@
     $("#tAddInput").value = "";
     saveDay();
     renderAll();
+    if (window.GAME) GAME.quest("add");
   });
   $("#tToFront").addEventListener("click", () => { setMode(true); location.hash = "#studio"; });
   $("#tToBack").addEventListener("click", () => { setMode(false); location.hash = "#studio"; });
@@ -2070,7 +2294,7 @@
     document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("active", a.dataset.view === v));
     if (v === "studio") { render(); fit(); }
     if (v === "today") renderToday();
-    if (v === "archive") buildDrum(); else stopSpin();
+    if (v === "archive") { buildDrum(); if (window.GAME) GAME.quest("archive"); } else stopSpin();
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", showView);
@@ -2264,6 +2488,7 @@
     saveDay();   // 导出过的这一天一定记进本机的「全部清单」
     try {
       const blob = await makeBlob();
+      if (window.GAME) GAME.exported();
       if (!isMobile() && canPickDir) {
         const dir = await writeToFolder(blob);
         exportTip.textContent = "已自动保存到「" + dir + "」✓";
@@ -2402,6 +2627,7 @@
     return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
   (function lock() {
+    if (PRODUCT.free) return;   // 免费总版不需要钥匙
     let ok = false;
     try { ok = KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY)); } catch (e) {}
     if (ok) return;
@@ -2449,6 +2675,387 @@
     });
   })();
 
+  /* ═════════════════ 游戏化：连胜 · 星星 · 等级 · 小Y · 每日任务 · 徽章 · 周报 · 解锁主题 ═════════════════
+     全部存在本机（localStorage），不需要账号。只有「今天」这一天的打勾才发星星，改日期刷不了分。 */
+  const GKEY = "dailyplan.game.v1";
+  const G = (() => {
+    const base = { stars: 0, earned: 0, checks: 0, awarded: {}, log: {}, badges: {}, freezes: 1, frozen: [], owned: [], quests: {}, exports: 0, early: {}, level: 1 };
+    try { return Object.assign(base, JSON.parse(localStorage.getItem(GKEY)) || {}); } catch (e) { return base; }
+  })();
+  const gsave = () => { try { localStorage.setItem(GKEY, JSON.stringify(G)); } catch (e) {} };
+  const dayAdd = (k, n) => { const [y, m, d] = k.split("-").map(Number); const t = new Date(y, m - 1, d + n); return `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`; };
+  const TODAY = () => keyFrom(todayStr());
+  const onToday = () => currentKey() === TODAY();
+  const checksOf = (k) => ((days[k] && days[k].items) || []).filter((x) => x.mark === "check").length;
+  const SKIN = () => (CLASSIC.includes(document.body.dataset.theme) ? "classic" : document.body.dataset.theme);
+
+  /* ── 连胜：今天或昨天往回数，每天至少完成 1 件（或用过补签卡）就算 ── */
+  const activeDay = (k) => G.frozen.includes(k) || (k === TODAY() && onToday() ? items.some((x) => x.mark === "check") : checksOf(k) > 0);
+  function streakInfo() {
+    const t = TODAY();
+    let k = activeDay(t) ? t : dayAdd(t, -1), n = 0;
+    while (activeDay(k)) { n++; k = dayAdd(k, -1); }
+    return { streak: n, today: activeDay(t) };
+  }
+  /* 昨天断了、前天还在：自动用一张补签卡把连胜救回来 */
+  function autoFreeze() {
+    const y = dayAdd(TODAY(), -1);
+    if (!activeDay(y) && activeDay(dayAdd(y, -1)) && G.freezes > 0) {
+      G.freezes--; G.frozen.push(y); gsave();
+      setTimeout(() => { toast(ICON.freeze, "补签卡帮你保住了连胜", `还剩 ${G.freezes} 张补签卡`); badge("freeze"); }, 900);
+    }
+  }
+
+  /* ── 等级：按累计获得的星星 ── */
+  const LV = [0, 60, 160, 320, 540, 820, 1180, 1620, 2160, 2800, 3560, 4440, 5460, 6620, 7940, 9420];
+  const TITLES = {
+    classic: ["新芽", "小步", "有序", "稳定", "自律", "坚持者", "生活家", "时间匠人", "日课大师", "传说"],
+    lwf: ["小怪胎", "怪朋友", "快乐怪咖", "闪光怪物", "怪朋友队长", "宇宙怪人", "Y世界守护者", "传说怪朋友"],
+    y2k: ["新用户.exe", "在线中", "闪闪少女", "千禧玩家", "超级 VIP", "镭射偶像", "Y2K 传奇"],
+    bauhaus: ["点", "线", "面", "构成者", "形式大师", "功能主义者", "包豪斯导师"],
+    songyuan: ["学徒", "画工", "画师", "待诏", "祗候", "画院翰林", "宋人"],
+    business: ["实习生", "专员", "主管", "经理", "总监", "合伙人", "首席执行官"],
+    autumn: ["一滴水", "一圈涟漪", "层层波纹", "潮汐", "海流", "大洋", "涟漪本身"],
+    comic: ["路人甲", "小跟班", "搭档", "主角", "超级英雄", "传奇英雄", "宇宙级英雄"],
+  };
+  function levelInfo() {
+    let lv = 1; while (lv < LV.length && G.earned >= LV[lv]) lv++;
+    const lo = LV[lv - 1], hi = LV[lv] ?? lo + 1600, list = TITLES[SKIN()] || TITLES.classic;
+    return { lv, lo, hi, title: list[Math.min(lv - 1, list.length - 1)] };
+  }
+
+  /* ── 图标（自己画的小 SVG，跟着界面颜色走） ── */
+  const ICON = {
+    fire: '<svg viewBox="0 0 24 24"><path d="M12 2.5c.6 3.2 4.8 5.3 4.8 10.2A4.8 4.8 0 0 1 12 17.5a4.8 4.8 0 0 1-4.8-4.8c0-2 1-3.4 2.1-4.3-.1 1.8.7 3 1.9 3.4-.6-3 .3-6.2.8-9.3Z" fill="#ff7a1a"/><path d="M12 21.5a3.4 3.4 0 0 1-3.4-3.4c0-2 1.8-3 2.6-4.6.4 1.4 2.1 2 3 3.4a3.4 3.4 0 0 1-2.2 4.6Z" fill="#ffcf3a"/></svg>',
+    star: '<svg viewBox="0 0 24 24"><path d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.6l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8Z" fill="#ffc21a" stroke="#e59a00" stroke-width="1.2" stroke-linejoin="round"/></svg>',
+    medal: '<svg viewBox="0 0 24 24"><path d="M7 2h4l1.5 5H8.5ZM13 2h4l-1.5 5H11.5Z" fill="#e0457b"/><circle cx="12" cy="14.5" r="6.5" fill="#ffc21a" stroke="#e59a00" stroke-width="1.2"/><path d="M12 11l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3Z" fill="#fff"/></svg>',
+    freeze: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" fill="#7ec8ff" stroke="#2a7fd4" stroke-width="1.2"/><path d="M12 8v8M8.5 10l7 4M15.5 10l-7 4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+    quest: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+  };
+
+  /* ── 徽章 ── */
+  const BADGES = [
+    { id: "first", name: "第一步", desc: "第一次打勾", test: () => G.checks >= 1 },
+    { id: "clear", name: "清空大师", desc: "把一天全部清空", test: (c) => c.cleared },
+    { id: "s3", name: "三日火苗", desc: "连胜 3 天", test: () => streakInfo().streak >= 3 },
+    { id: "s7", name: "一周连胜", desc: "连胜 7 天", test: () => streakInfo().streak >= 7 },
+    { id: "s30", name: "月度传说", desc: "连胜 30 天", test: () => streakInfo().streak >= 30 },
+    { id: "c50", name: "五十件小事", desc: "累计完成 50 件", test: () => G.checks >= 50 },
+    { id: "c100", name: "百事通", desc: "累计完成 100 件", test: () => G.checks >= 100 },
+    { id: "early5", name: "早起鸟", desc: "5 天在中午前完成第一件", test: () => Object.keys(G.early).length >= 5 },
+    { id: "card", name: "第一张卡片", desc: "导出一张小红书卡片", test: () => G.exports >= 1 },
+    { id: "collector", name: "收藏家", desc: "拥有 3 个设计主题", test: () => ownedDesigned().length >= 3 },
+    { id: "freeze", name: "失而复得", desc: "用补签卡救回一次连胜", test: () => G.frozen.length >= 1 },
+    { id: "lv5", name: "升级达人", desc: "升到 5 级", test: () => levelInfo().lv >= 5 },
+  ];
+  function badge(only) {
+    const ctx = { cleared: onToday() && (G.awarded[TODAY()] || {}).clear };
+    BADGES.forEach((b) => {
+      if (G.badges[b.id] || (only && b.id !== only) || !b.test(ctx)) return;
+      G.badges[b.id] = TODAY(); gsave();
+      award(20, null, true);
+      toast(ICON.medal, `获得徽章「${b.name}」`, `${b.desc} · +20 星`);
+    });
+    hud();
+  }
+
+  /* ── 每日任务：按日期挑 3 个，每个 +15 星 ── */
+  const QUESTS = [
+    { id: "write3", text: "写下至少 3 件事", test: (q) => items.filter((x) => x.text).length >= 3 },
+    { id: "done1", text: "完成 1 件事", test: () => items.some((x) => x.mark === "check") },
+    { id: "done3", text: "完成 3 件事", test: () => items.filter((x) => x.mark === "check").length >= 3 },
+    { id: "early", text: "中午 12 点前完成 1 件", test: () => !!G.early[TODAY()] },
+    { id: "clear", text: "把今天全部清空", test: () => !!(G.awarded[TODAY()] || {}).clear },
+    { id: "card", text: "生成一张小红书卡片", test: (q) => q.flags.card },
+    { id: "archive", text: "去「全部清单」转转卷筒", test: (q) => q.flags.archive },
+    { id: "add", text: "新加一件今天的事", test: (q) => q.flags.add },
+    { id: "honest", text: "诚实地给没做成的事打 ✗", test: () => items.some((x) => x.mark === "cross") },
+  ];
+  function questsToday() {
+    const t = TODAY();
+    if (!G.quests[t]) {
+      let h = 0; for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      const pool = QUESTS.map((q) => q.id), pick = [];
+      while (pick.length < 3) { h = (h * 1103515245 + 12345) >>> 0; const id = pool.splice(h % pool.length, 1)[0]; pick.push(id); }
+      G.quests = { [t]: { ids: pick, done: [], flags: {} } };   // 只留今天的
+      gsave();
+    }
+    return G.quests[t];
+  }
+  function quest(flag) {
+    if (!onToday()) return;
+    const q = questsToday();
+    if (flag) q.flags[flag] = true;
+    q.ids.forEach((id) => {
+      const def = QUESTS.find((x) => x.id === id);
+      if (q.done.includes(id) || !def.test(q)) return;
+      q.done.push(id); gsave();
+      award(15, null, true);
+      toast(ICON.quest, "完成每日任务", `${def.text} · +15 星`);
+    });
+    gsave(); hud();
+  }
+
+  /* ── 发星星 + 飞星动画 ── */
+  function award(n, fromEl, quiet) {
+    const t = TODAY();
+    G.stars += n; G.earned += n; G.log[t] = (G.log[t] || 0) + n; gsave();
+    if (fromEl) flyStars(fromEl, n);
+    const lv = levelInfo().lv;
+    if (lv > G.level) { G.level = lv; gsave(); setTimeout(() => levelUp(), quiet ? 1200 : 700); }
+    hud();
+  }
+  function flyStars(fromEl, n) {
+    const r = fromEl.getBoundingClientRect(), to = $("#hudStars").getBoundingClientRect();
+    const tag = document.createElement("div");
+    tag.className = "fx-plus"; tag.textContent = `+${n}`;
+    tag.style.left = r.left + r.width / 2 + "px"; tag.style.top = r.top + "px";
+    document.body.appendChild(tag); setTimeout(() => tag.remove(), 900);
+    for (let i = 0; i < Math.min(6, 2 + n / 10); i++) {
+      const s = document.createElement("div");
+      s.className = "fx-star"; s.innerHTML = ICON.star;
+      s.style.left = r.left + r.width / 2 + "px"; s.style.top = r.top + r.height / 2 + "px";
+      document.body.appendChild(s);
+      const dx = to.left + to.width / 2 - (r.left + r.width / 2), dy = to.top + to.height / 2 - (r.top + r.height / 2);
+      s.animate([{ transform: "translate(-50%,-50%) scale(.4)", opacity: 1 },
+        { transform: `translate(calc(-50% + ${(Math.random() - .5) * 120}px), calc(-50% - ${40 + Math.random() * 50}px)) scale(1.1)`, opacity: 1, offset: .35 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.5)`, opacity: .2 }],
+        { duration: 700 + i * 70, easing: "cubic-bezier(.3,.7,.3,1)" }).onfinish = () => s.remove();
+    }
+    setTimeout(() => { const st = $("#hudStars").closest(".hud-pill"); st.classList.remove("pop"); void st.offsetWidth; st.classList.add("pop"); }, 650);
+  }
+  function confetti() {
+    const cv = document.createElement("canvas"), ctx = cv.getContext("2d");
+    cv.className = "fx-confetti"; cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
+    document.body.appendChild(cv);
+    const cols = ["#ff5fb8", "#ffc21a", "#36c9a0", "#4b86ff", "#ff6a3d", "#a26bff"];
+    const ps = Array.from({ length: 140 }, () => ({ x: innerWidth / 2, y: innerHeight * .35, vx: (Math.random() - .5) * 14, vy: -6 - Math.random() * 9,
+      s: 5 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: cols[(Math.random() * cols.length) | 0] }));
+    let f = 0;
+    (function tick() {
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0); ctx.clearRect(0, 0, innerWidth, innerHeight);
+      ps.forEach((p) => { p.vy += .32; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); });
+      if (++f < 150) requestAnimationFrame(tick); else cv.remove();
+    })();
+  }
+  const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
+  /* ── 提示条 / 升级弹窗 ── */
+  function toast(icon, title, sub) {
+    const el = document.createElement("div");
+    el.className = "fx-toast";
+    el.innerHTML = `<span class="ti">${icon}</span><div><b>${esc(title)}</b><small>${esc(sub || "")}</small></div>`;
+    $("#toasts").appendChild(el);
+    setTimeout(() => el.classList.add("out"), 2600);
+    setTimeout(() => el.remove(), 3100);
+  }
+  function levelUp() {
+    const L2 = levelInfo();
+    $("#lvNum").textContent = "Lv." + L2.lv; $("#lvTitle").textContent = L2.title;
+    const d = $("#lvDialog"); d.showModal ? d.showModal() : d.setAttribute("open", "");
+    confetti(); buzz([20, 40, 20]); badge("lv5");
+  }
+  $("#lvClose").addEventListener("click", () => { const d = $("#lvDialog"); d.close ? d.close() : d.removeAttribute("open"); });
+
+  /* ── 打勾之后：发星星、任务、徽章、小Y 反应 ── */
+  function onMark(it, prev, el) {
+    if (!onToday()) { hud(); return; }
+    const t = TODAY(), a = G.awarded[t] || (G.awarded[t] = { n: 0 });
+    const c = items.filter((x) => x.mark === "check").length;
+    if (it.mark === "check") {
+      buzz(18);
+      if (c > a.n) { const d = c - a.n; a.n = c; G.checks += d; award(10 * d, el); }
+      if (!a.early && new Date().getHours() < 12) { a.early = true; G.early[t] = 1; setTimeout(() => { award(10, el); toast(ICON.star, "早起鸟", "中午前就完成了一件 · +10 星"); }, 500); }
+      if (!a.clear && items.length >= 3 && items.every((x) => x.mark === "check")) {
+        a.clear = true; gsave();
+        setTimeout(() => { award(30, el); confetti(); buzz([30, 60, 30]); say("party"); toast(ICON.fire, "今天全部清空！", "+30 星 · 太漂亮了"); }, 350);
+      } else say(c === 1 ? "first" : "ok");
+    } else if (it.mark === "cross") { say("cross"); buzz(8); }
+    gsave(); quest(); badge();
+  }
+
+  /* ── 小Y：会变表情、会说话、随连胜长大 ── */
+  const LINES = {
+    sleep: ["今天也一起慢慢来吧～", "先写下第一件事？", "我在这儿陪你 ✦", "打第一个勾，我就醒啦"],
+    first: ["第一件！好的开始 ✦", "动起来啦！", "这一下很关键哦"],
+    ok: ["又一件！", "节奏不错～", "再来一件，我就跳个舞", "你今天好稳"],
+    party: ["全部清空！今天的你闪闪发光 ✦", "完美的一天！", "我要转圈圈了！"],
+    cross: ["没做成也没关系，诚实最酷", "明天再试，我等你", "记下来就是进步"],
+    worry: ["连胜还差今天这一下……", "别让火苗熄灭呀", "做一件小事就够了"],
+    tap: ["戳我干嘛～", "嘿嘿", "今天想做点什么？", "我是小Y，Y世界的向导", "多喝水！"],
+  };
+  let sayTimer = 0;
+  function mood() {
+    const done = items.filter((x) => x.mark === "check").length;
+    if (onToday() && items.length && items.every((x) => x.mark === "check")) return "party";
+    if (done) return "ok";
+    const s = streakInfo();
+    if (s.streak > 0 && !s.today && new Date().getHours() >= 18) return "worry";
+    return "sleep";
+  }
+  function say(kind) {
+    const list = LINES[kind] || LINES.sleep, b = $("#buddyBubble");
+    b.textContent = list[(Math.random() * list.length) | 0];
+    b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+    const y = $("#buddy"); y.classList.remove("hop"); void y.offsetWidth; y.classList.add("hop");
+    y.dataset.mood = kind === "tap" || kind === "first" ? mood() : kind === "cross" ? "worry" : kind;
+  }
+  $("#buddy").addEventListener("click", () => { buzz(10); say("tap"); });
+
+  /* ── 顶部状态条 ── */
+  function hud() {
+    const s = streakInfo(), L2 = levelInfo();
+    $("#hudStreak").textContent = s.streak;
+    $("#hudStreakPill").classList.toggle("cold", !s.today);
+    $("#hudStars").textContent = G.stars;
+    $("#hudBadgeN").textContent = Object.keys(G.badges).length;
+    $("#hudTitle").textContent = `Lv.${L2.lv} ${L2.title}`;
+    $("#hudLv").style.width = Math.min(100, (G.earned - L2.lo) / (L2.hi - L2.lo) * 100) + "%";
+    $("#hudLvText").textContent = `${G.earned - L2.lo}/${L2.hi - L2.lo}`;
+    const y = $("#buddy");
+    y.style.setProperty("--grow", (1 + Math.min(s.streak, 30) * .012).toFixed(3));
+    if (!y.classList.contains("hop")) y.dataset.mood = mood();
+    const q = questsToday();
+    $("#questList").innerHTML = q.ids.map((id) => { const def = QUESTS.find((x) => x.id === id), ok = q.done.includes(id);
+      return `<li class="${ok ? "ok" : ""}"><span class="qd">${ok ? "✓" : ""}</span>${esc(def.text)}<em>+15</em></li>`; }).join("");
+    $("#questN").textContent = `${q.done.length}/3`;
+  }
+
+  /* ── 徽章墙 + 补签卡商店 ── */
+  $("#hudBadges").addEventListener("click", () => {
+    $("#badgeGrid").innerHTML = BADGES.map((b) => `<div class="bd ${G.badges[b.id] ? "on" : ""}"><span>${ICON.medal}</span><b>${b.name}</b><small>${G.badges[b.id] ? G.badges[b.id].slice(5).replace("-", "/") + " 获得" : b.desc}</small></div>`).join("");
+    $("#freezeN").textContent = G.freezes;
+    const d = $("#badgeDialog"); d.showModal ? d.showModal() : d.setAttribute("open", "");
+  });
+  $("#badgeClose").addEventListener("click", () => { const d = $("#badgeDialog"); d.close ? d.close() : d.removeAttribute("open"); });
+  $("#buyFreeze").addEventListener("click", () => {
+    if (G.stars < 100) { toast(ICON.freeze, "星星不够", "攒到 100 星就能换一张补签卡"); return; }
+    G.stars -= 100; G.freezes++; gsave(); $("#freezeN").textContent = G.freezes; hud();
+    toast(ICON.freeze, "换到一张补签卡", "哪天忘了打卡，它会自动帮你保住连胜");
+  });
+
+  /* ── 左右滑动打勾（手机）：右滑 ✓、左滑 ✗ ── */
+  function swipeable(li, it) {
+    let x0 = 0, y0 = 0, dx = 0, on = false, locked = false;
+    li.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse" || e.target.closest(".t-text:focus, .t-del")) return; x0 = e.clientX; y0 = e.clientY; dx = 0; on = true; locked = false; });
+    li.addEventListener("pointermove", (e) => {
+      if (!on) return;
+      const mx = e.clientX - x0, my = e.clientY - y0;
+      if (!locked) { if (Math.abs(my) > 10) { on = false; return; } if (Math.abs(mx) > 12) { locked = true; li.setPointerCapture(e.pointerId); } else return; }
+      dx = Math.max(-140, Math.min(140, mx));
+      li.style.transform = `translateX(${dx}px) rotate(${dx / 60}deg)`;
+      li.classList.toggle("sw-right", dx > 70); li.classList.toggle("sw-left", dx < -70);
+    });
+    const end = () => {
+      if (!on) return; on = false;
+      li.style.transform = ""; li.classList.remove("sw-right", "sw-left");
+      if (!locked) return;
+      if (dx > 70 && it.mark !== "check") setMark(it.id, "check", li.querySelector(".t-check"));
+      else if (dx < -70 && it.mark !== "cross") setMark(it.id, "cross", li.querySelector(".t-check"));
+    };
+    li.addEventListener("pointerup", end); li.addEventListener("pointercancel", end);
+  }
+
+  /* ── 主题解锁：经典款 + 怪朋友免费，其他用星星换，或输入已购买的星星密钥 ── */
+  const FREE_THEMES = PRODUCT.freeThemes || THEMES;
+  const COST = PRODUCT.cost || 500;
+  const ownedDesigned = () => DESIGNED.filter((t) => isOwned(t) && !(PRODUCT.freeThemes || []).includes(t));
+  function legacyOwned(t) {   // 以前买过单款、在本机解锁过
+    const map = PRODUCT.themeOf || {};
+    return Object.keys(map).some((slug) => map[slug].includes(t) && (() => { try { return !!localStorage.getItem("dailyplan.unlock." + slug); } catch (e) { return false; } })());
+  }
+  function isOwned(t) { return FREE_THEMES.includes(t) || G.owned.includes(t) || legacyOwned(t); }
+  const THEME_NAME = { lwf: "Little Weird Friends", y2k: "Y2K 千禧", bauhaus: "包豪斯", songyuan: "宋人花鸟", business: "机芯", autumn: "涟漪", comic: "波普网点" };
+  let wantTheme = null;
+  function askUnlock(t) {
+    wantTheme = t;
+    $("#unName").textContent = THEME_NAME[t] || t;
+    $("#unCost").textContent = COST; $("#unHave").textContent = G.stars;
+    $("#unBuy").disabled = G.stars < COST;
+    $("#unErr").textContent = ""; $("#unCode").value = "";
+    $("#unPreview").src = `${PRODUCT.base || ""}previews/${({ lwf: "weird", y2k: "y2k", bauhaus: "bauhaus", songyuan: "songhua", business: "calibre", autumn: "ripple", comic: "pop" })[t]}.jpg`;
+    const d = $("#unlockDialog"); d.showModal ? d.showModal() : d.setAttribute("open", "");
+  }
+  function grant(t, how) {
+    if (!G.owned.includes(t)) G.owned.push(t);
+    gsave(); decorateSwatches();
+    const d = $("#unlockDialog"); d.close ? d.close() : d.removeAttribute("open");
+    confetti(); toast(ICON.star, `解锁「${THEME_NAME[t]}」`, how); badge("collector");
+    setTheme(t, true);
+  }
+  $("#unBuy").addEventListener("click", () => { if (G.stars < COST) return; G.stars -= COST; grant(wantTheme, `花了 ${COST} 星`); hud(); });
+  $("#unRedeem").addEventListener("click", async () => {
+    const code = $("#unCode").value.trim().toUpperCase().replace(/[\s"'“”「」:：]+/g, "");
+    if (!code) return;
+    const codes = PRODUCT.codes || {}, map = PRODUCT.themeOf || {};
+    for (const slug of Object.keys(codes)) {
+      const h = await sha256(slug + ":" + code);
+      if (codes[slug].includes(h)) {
+        try { localStorage.setItem("dailyplan.unlock." + slug, h); } catch (e) {}
+        (map[slug] || []).forEach((t) => { if (!G.owned.includes(t)) G.owned.push(t); });
+        grant(map[slug].includes(wantTheme) ? wantTheme : map[slug][0], "星星密钥兑换成功");
+        return;
+      }
+    }
+    $("#unErr").textContent = "这把密钥打不开，再核对一下字母和数字。";
+  });
+  $("#unClose").addEventListener("click", () => { const d = $("#unlockDialog"); d.close ? d.close() : d.removeAttribute("open"); });
+  function decorateSwatches() {
+    swatches.forEach((b) => {
+      const t = b.dataset.setTheme, lock = !isOwned(t);
+      b.classList.toggle("locked", lock);
+      let tag = b.querySelector(".sw-lock");
+      if (lock && !tag) { tag = document.createElement("span"); tag.className = "sw-lock"; tag.innerHTML = ICON.lock + COST; b.appendChild(tag); }
+      if (!lock && tag) tag.remove();
+    });
+  }
+
+  /* ── 本周战绩卡：自动生成一张可以发小红书的卡片 ── */
+  function weekCard() {
+    const t = TODAY(), ks = Array.from({ length: 7 }, (_, i) => dayAdd(t, i - 6));
+    const W = ["日", "一", "二", "三", "四", "五", "六"];
+    const stat = ks.map((k) => { const its = (k === t && onToday() ? items : (days[k] || {}).items || []).filter((x) => x.text);
+      const c = its.filter((x) => x.mark === "check").length; return { k, c, n: its.length, r: its.length ? c / its.length : 0 }; });
+    const done = stat.reduce((a, s) => a + s.c, 0), all = stat.reduce((a, s) => a + s.n, 0);
+    const stars = ks.reduce((a, k) => a + (G.log[k] || 0), 0), s = streakInfo().streak, L2 = levelInfo();
+    const got = BADGES.filter((b) => G.badges[b.id] && ks.includes(G.badges[b.id]));
+    const [y1, m1, d1] = ks[0].split("-"), [, m2, d2] = t.split("-");
+    return `<div class="wk" data-theme="${document.body.dataset.theme}">
+      <div class="wk-top"><span>WEEKLY · Y世界</span><span>${y1}.${m1}.${d1} — ${m2}.${d2}</span></div>
+      <h2>本周战绩</h2>
+      <div class="wk-fire">${ICON.fire}<b>${s}</b><span>天连胜</span></div>
+      <div class="wk-row"><div><b>${done}</b><small>完成的事</small></div><div><b>${all ? Math.round(done / all * 100) : 0}%</b><small>完成率</small></div><div><b>+${stars}</b><small>本周星星</small></div></div>
+      <div class="wk-days">${stat.map((x) => { const [yy, mm, dd] = x.k.split("-").map(Number); const wd = W[new Date(yy, mm - 1, dd).getDay()];
+        return `<div class="${x.c ? "on" : ""}"><i style="--r:${x.r}"></i><small>周${wd}</small></div>`; }).join("")}</div>
+      <div class="wk-lv">Lv.${L2.lv} · ${esc(L2.title)}${got.length ? ` · 本周新徽章 ${got.map((b) => b.name).join("、")}` : ""}</div>
+      <div class="wk-buddy">${$("#buddy").querySelector("svg").outerHTML}<p>${done ? "这一周，你认真地过了每一天。" : "新的一周，从一件小事开始。"}</p></div>
+      <div class="wk-foot">每日计划 · 像做游戏一样过每一天</div>
+    </div>`;
+  }
+  $("#btnWeek").addEventListener("click", async () => {
+    const box = document.createElement("div");
+    box.className = "wk-stage"; box.innerHTML = weekCard();
+    document.body.appendChild(box);
+    const node = box.firstElementChild;
+    try {
+      await document.fonts.ready;
+      let css; try { css = await fontEmbedCSS(node); } catch (e) {}
+      const blob = await htmlToImage.toBlob(node, { pixelRatio: 1, width: 1080, height: 1440, cacheBust: true, fontEmbedCSS: css });
+      exported();
+      if (navigator.share && isMobile()) await shareToAlbum(blob);
+      else { const url = URL.createObjectURL(blob), a = document.createElement("a"); a.href = url; a.download = `本周战绩_${TODAY()}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 5000); }
+      toast(ICON.star, "本周战绩卡已生成", "发到小红书，记录你的这一周");
+    } catch (err) { if (!err || err.name !== "AbortError") toast(ICON.quest, "生成失败", String(err && err.message || err)); }
+    finally { box.remove(); }
+  });
+
+  function exported() { G.exports++; gsave(); quest("card"); badge("card"); }
+  window.GAME = { onMark, quest, badge, hud, swipeable, isOwned, askUnlock, decorateSwatches, exported };
+  autoFreeze(); decorateSwatches(); questsToday(); hud();
+  setTimeout(() => say(mood()), 1200);
+
   /* ───────────────── 第一次打开：3 步引导 ───────────────── */
   const TOUR_KEY = "dailyplan.tour." + PRODUCT.slug;
   function showTour() {
@@ -2463,7 +3070,7 @@
   });
   $("#trialUnlock").addEventListener("click", () => { try { sessionStorage.clear(); } catch (e) {} location.reload(); });
   /* 已经解锁过的老用户第一次看到新版，也给一次引导 */
-  try { if (KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY))) setTimeout(showTour, 300); } catch (e) {}
+  try { if (PRODUCT.free || KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY))) setTimeout(showTour, 700); } catch (e) {}
 
   /* 注册 Service Worker（离线缓存 / 可安装） */
   if ("serviceWorker" in navigator) {
@@ -2477,6 +3084,11 @@
   $("#dateInput").value = todayStr();
   syncDateText();
   setTheme(DEFAULT_THEME, false);
+  if (THEMES.length > 1) {
+    let last = null;
+    try { last = localStorage.getItem("dailyplan.lastTheme"); } catch (e) {}
+    if (THEMES.includes(last) && (!window.GAME || GAME.isOwned(last))) setTheme(last, false);
+  }
   if (!loadDay(currentKey())) {
     const recent = sortedKeys()[0];
     if (recent) {
@@ -2491,14 +3103,16 @@
   const q = new URLSearchParams(location.search);
   if (THEMES.includes(q.get("theme"))) {
     if (q.has("pal")) palSel[q.get("theme")] = Number(q.get("pal")) || 0;
-    setTheme(q.get("theme"), false);
+    if (!window.GAME || GAME.isOwned(q.get("theme")) || q.has("solo")) setTheme(q.get("theme"), false);
+    else setTimeout(() => GAME.askUnlock(q.get("theme")), 600);
   }
   if (q.has("demo")) setItems([
     { text: "早起 · 喝一杯温水", mark: "check" }, { text: "上班", mark: "check" }, { text: "今天发工资！", mark: "check" },
     { text: "yoga", mark: "check" }, { text: "敷面膜", mark: "cross" }, { text: "duolingo", mark: "check" }, { text: "看德剧", mark: "cross" },
   ]);
   if (q.get("mode") === "back") { frontMode = false; page.classList.remove("front"); $("#btnFront").classList.remove("active"); $("#btnBack").classList.add("active"); }
-  if (q.has("solo")) { document.body.classList.add("solo"); location.hash = "#studio"; }
+  if (q.get("solo") === "week" && window.GAME) { const h = weekCard(); document.body.className = ""; document.body.innerHTML = h; }
+  else if (q.has("solo")) { document.body.classList.add("solo"); location.hash = "#studio"; }
   render();
   showView();
 </script>

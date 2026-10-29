@@ -1,33 +1,44 @@
-"""把 src/template.html 生成成 8 款独立产品 + 主理人总控台 + 首页目录。
+"""把 src/template.html 生成成：
+    index.html     免费总版「每日计划 · Y世界」：全部主题 + 游戏系统；经典款和怪朋友免费，其余用星星或星星密钥解锁
+    studio/        主理人总控台：全部主题直接可用，要主理人的码
+    p/<款>/        以前的单款网址，现在自动跳到总版并打开对应主题（买过的密钥照样能解锁）
 
-    python build.py              生成到仓库里（p/<款>/、studio/、index.html）
-    python build.py --preview D  生成一份不带访问码锁的本地预览到目录 D（只用来截图，不要上传）
+    python build.py              生成到仓库里
+    python build.py --preview D  生成一份不带钥匙锁的本地预览到目录 D（只用来截图，不要上传）
 
-改主题 / 修 bug 只改 src/template.html，再跑一次这个脚本，8 款一起更新。
+改功能 / 修 bug 只改 src/template.html，再跑一次这个脚本。
 """
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 9
-SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 10   # 改了代码就加 1，手机上装好的版本会自动换新
+SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
 STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")
+SHOP = [p for p in PRODUCTS if p["slug"] != "studio"]
+ALL = ["forest", "ocean", "morandi", "paper", "night", "lwf", "y2k", "bauhaus", "songyuan", "business", "autumn", "comic"]
+FREE = ["forest", "ocean", "morandi", "paper", "night", "lwf"]
+
+APP = {
+    "slug": "app", "name": "每日计划 · Y世界", "short": "Y世界计划",
+    "tagline": "像做游戏一样过每一天：打勾得星星、攒连胜、做任务、收集徽章，一键生成小红书卡片。",
+    "themes": ALL, "free": True, "freeThemes": FREE, "cost": 500, "defaultTheme": "lwf",
+    # 卖出去的星星密钥：输入后直接解锁对应主题
+    "codes": {p["slug"]: p.get("hashes", [p["hash"]]) for p in SHOP},
+    "themeOf": {p["slug"]: p["themes"] for p in SHOP},
+    "samples": {t: p["sample"] for p in SHOP if p.get("sample") for t in p["themes"]},
+}
 
 
-def page(prod, up, preview):
+def page(prod, up, preview, path, img):
     s = TPL.replace("__MASTER_HASH__", STUDIO["hash"])
     if prod["slug"] != "studio":
-        cfg = {k: prod[k] for k in ("slug", "name", "themes", "hash", "hashes", "sample") if k in prod}
-        s = s.replace("<!--PRODUCT-->", "<script>window.PRODUCT=" + json.dumps(cfg, ensure_ascii=False) + "</script>")
-    s = s.replace('href="icon-192.png"', f'href="{up}icon-192.png"')
-    s = s.replace('href="apple-touch-icon.png"', f'href="{up}apple-touch-icon.png"')
-    s = s.replace('src="html-to-image.js"', f'src="{up}html-to-image.js"')
-    s = s.replace('href="fonts/fonts.css"', f'href="{up}fonts/fonts.css"')
+        s = s.replace("<!--PRODUCT-->", "<script>window.PRODUCT=" + json.dumps(prod, ensure_ascii=False) + "</script>")
+    for a, b in (('href="icon-192.png"', f'href="{up}icon-192.png"'), ('href="apple-touch-icon.png"', f'href="{up}apple-touch-icon.png"'),
+                 ('src="html-to-image.js"', f'src="{up}html-to-image.js"'), ('href="fonts/fonts.css"', f'href="{up}fonts/fonts.css"')):
+        s = s.replace(a, b)
     s = s.replace('content="每日计划">', f'content="{html.escape(prod["short"])}">', 1)
-    # 链接发到聊天 / 社交平台时显示的标题、简介和封面
-    path = "studio/" if prod["slug"] == "studio" else f"p/{prod['slug']}/"
-    img = SITE + f"previews/{prod['slug']}.jpg" if prod["slug"] != "studio" else SITE + "previews/songhua.jpg"
     meta = "\n".join([
         f'<title>{html.escape(prod["name"])}</title>',
         f'<meta name="description" content="{html.escape(prod["tagline"])}">',
@@ -35,7 +46,7 @@ def page(prod, up, preview):
         f'<meta property="og:title" content="{html.escape(prod["name"])}">',
         f'<meta property="og:description" content="{html.escape(prod["tagline"])}">',
         f'<meta property="og:url" content="{SITE}{path}">',
-        f'<meta property="og:image" content="{img}">',
+        f'<meta property="og:image" content="{SITE}{img}">',
         '<meta name="twitter:card" content="summary_large_image">',
     ])
     s = s.replace("<title>每日计划</title>", meta, 1)
@@ -48,7 +59,7 @@ def manifest(prod, up):
     return {
         "name": prod["name"], "short_name": prod["short"], "description": prod["tagline"],
         "id": "./", "start_url": "./index.html#today", "scope": "./", "display": "standalone", "orientation": "portrait",
-        "background_color": "#f3eee5", "theme_color": "#f3eee5",
+        "background_color": "#c8d5f4", "theme_color": "#c8d5f4",
         "icons": [{"src": f"{up}icon-192.png", "sizes": "192x192", "type": "image/png"},
                   {"src": f"{up}icon-512.png", "sizes": "512x512", "type": "image/png"}],
         "shortcuts": [{"name": "今日清单", "url": "./index.html#today"}, {"name": "全部清单", "url": "./index.html#archive"},
@@ -56,14 +67,14 @@ def manifest(prod, up):
     }
 
 
-def worker(prod, up):
+def worker(slug, up):
     assets = ["./", "./index.html", "./manifest.json", f"{up}html-to-image.js", f"{up}fonts/fonts.css", f"{up}icon-192.png", f"{up}icon-512.png"]
-    return f"""/* {prod['name']} · 离线缓存（build.py 生成） */
-const CACHE = "daily-plan-{prod['slug']}-v{VERSION}";
+    return f"""/* 每日计划 · 离线缓存（build.py 生成） */
+const CACHE = "daily-plan-{slug}-v{VERSION}";
 const ASSETS = {json.dumps(assets)};
 self.addEventListener("install", (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys()
-  .then((ks) => Promise.all(ks.filter((k) => k.startsWith("daily-plan-{prod['slug']}-") && k !== CACHE).map((k) => caches.delete(k))))
+  .then((ks) => Promise.all(ks.filter((k) => /^daily-plan-/.test(k) && k !== CACHE && (k.startsWith("daily-plan-{slug}-") || /^daily-plan-v\\d+$/.test(k))).map((k) => caches.delete(k))))
   .then(() => self.clients.claim())));
 self.addEventListener("fetch", (e) => {{
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== self.location.origin) return;
@@ -81,73 +92,54 @@ self.addEventListener("fetch", (e) => {{
 """
 
 
-def catalog():
-    cards = "".join(f"""
-    <a class="card" href="p/{p['slug']}/">
-      <img src="previews/{p['slug']}.jpg" alt="{html.escape(p['name'])}" loading="lazy">
-      <div class="meta"><span class="no">{i:02d}</span><b>{html.escape(p['name'].replace('每日计划 · ', ''))}</b><span>{html.escape(p['tagline'])}</span></div>
-    </a>""" for i, p in enumerate([p for p in PRODUCTS if p["slug"] != "studio"], 1))
-    return f"""<!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>每日计划 · 全部款式</title>
-<meta name="description" content="手机全屏打勾的每日清单，一键生成小红书卡片。8 款风格各自独立。">
-<meta property="og:title" content="每日计划 · 8 款"><meta property="og:image" content="{SITE}previews/songhua.jpg">
-<link rel="icon" type="image/png" href="icon-192.png">
-<link rel="stylesheet" href="fonts/fonts.css">
-<style>
-:root{{--bg:#faf9f5;--ink:#191817;--ink2:#5e5a55;--ink3:#9a958e;--rule:#e5e1db}}
-@media (prefers-color-scheme:dark){{:root:not([data-theme="light"]){{--bg:#131211;--ink:#eeeae4;--ink2:#aba59c;--ink3:#77726b;--rule:#2c2a27}}}}
-*{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.7}}
-.wrap{{max-width:1240px;margin:0 auto;padding:56px clamp(16px,4vw,48px) 64px}}
-.cap{{font-family:"EB Garamond",serif;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink3)}}
-h1{{font-family:"Noto Serif SC",serif;font-weight:600;font-size:clamp(32px,5vw,56px);letter-spacing:.08em;margin:10px 0 8px}}
-.lead{{color:var(--ink2);max-width:36em;margin:0 0 40px}}
-.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:36px 24px;border-top:1px solid var(--ink);padding-top:32px}}
-.card{{color:inherit;text-decoration:none;display:block}}
-.card img{{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;box-shadow:0 0 0 1px var(--rule)}}
-.meta{{display:grid;grid-template-columns:auto 1fr;gap:0 12px;padding-top:12px}}
-.meta .no{{font-family:"EB Garamond",serif;color:var(--ink3);grid-row:span 2}}
-.meta b{{font-family:"Noto Serif SC",serif;font-size:17px;letter-spacing:.06em}}
-.meta span:last-child{{color:var(--ink2);font-size:13px}}
-.card:hover b{{text-decoration:underline;text-underline-offset:4px}}
-.buy{{margin-top:64px;border-top:1px solid var(--ink);padding-top:28px;max-width:44em}}
-.buy h2{{font-family:"Noto Serif SC",serif;font-weight:600;font-size:26px;letter-spacing:.1em;margin:0 0 14px}}
-.buy ol{{padding-left:1.2em;display:grid;gap:10px;margin:0}}.buy b{{margin-right:8px}}.buy p{{color:var(--ink2);margin-top:16px}}
-footer{{border-top:1px solid var(--rule);margin-top:56px;padding-top:20px;font-size:12.5px;color:var(--ink3)}}
-</style></head><body><main class="wrap">
-<div class="cap">Daily Plan · 8 Editions</div>
-<h1>每日计划</h1>
-<p class="lead">手机全屏打勾的每日清单，一键生成 1080×1440 小红书卡片，所有日子围成一个卷筒慢慢转。共 8 款，各自独立，打开需要购买后收到的访问码。</p>
-<div class="grid">{cards}
-</div>
-<section class="buy">
-  <h2>怎么买</h2>
-  <ol>
-    <li><b>选款</b>在小红书店铺「加购物车 / 立即购买」，选一个喜欢的款式（8 款各自独立）。</li>
-    <li><b>收钥匙</b>付款后会收到一条消息：进入Y世界大门的星星密钥，和这一款的网址。</li>
-    <li><b>开门</b>打开网址，输入密钥。输对一次，这台设备以后都不用再输；点「添加到主屏幕」就能像 App 一样用。</li>
-  </ol>
-  <p>还没想好？点开任意一款，在钥匙页点「先试试看」，可以完整玩一遍（导出的图带水印）。</p>
-</section>
-<footer>© 黄鈺茜 Youcy Huang · 数据只存在你自己的设备上</footer>
-</main></body></html>
+def redirect(prod):
+    """旧的单款网址：跳到总版并打开这一款的主题"""
+    t = prod["themes"][0]
+    target = "../../" + ("" if prod["slug"] == "classic" else f"?theme={t}") + "#today"
+    return f"""<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{html.escape(prod['name'])}</title>
+<meta http-equiv="refresh" content="0;url={target}">
+<script>
+  /* 以前装过的单款离线缓存先注销，再跳到总版 */
+  if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => {{ if (r.scope.includes("/p/")) r.unregister(); }}));
+  location.replace("{target}");
+</script></head><body><p>正在前往 <a href="{target}">每日计划 · Y世界</a>…</p></body></html>
 """
 
 
+RETIRE_SW = """/* 单款版已经合并到总版：这个旧缓存只负责注销自己 */
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil(self.registration.unregister()));
+"""
+
+
+def write(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, "w", encoding="utf-8", newline="\n").write(text)
+
+
 def build(out, preview=False):
-    for prod in PRODUCTS:
-        sub = "studio" if prod["slug"] == "studio" else os.path.join("p", prod["slug"])
-        up = "../" if prod["slug"] == "studio" else "../../"
-        d = os.path.join(out, sub)
-        os.makedirs(d, exist_ok=True)
-        open(os.path.join(d, "index.html"), "w", encoding="utf-8", newline="\n").write(page(prod, up, preview))
-        json.dump(manifest(prod, up), open(os.path.join(d, "manifest.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-        open(os.path.join(d, "service-worker.js"), "w", encoding="utf-8", newline="\n").write(worker(prod, up))
-    open(os.path.join(out, "index.html"), "w", encoding="utf-8", newline="\n").write(catalog())
+    # 免费总版放在根目录
+    write(os.path.join(out, "index.html"), page(APP, "", preview, "", "previews/weird.jpg"))
+    json.dump(manifest(APP, ""), open(os.path.join(out, "manifest.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    write(os.path.join(out, "service-worker.js"), worker("app", ""))
+    # 主理人总控台
+    write(os.path.join(out, "studio", "index.html"), page(STUDIO, "../", preview, "studio/", "previews/songhua.jpg"))
+    json.dump(manifest(STUDIO, "../"), open(os.path.join(out, "studio", "manifest.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    write(os.path.join(out, "studio", "service-worker.js"), worker("studio", "../"))
+    # 旧的单款网址 → 跳转
+    for prod in SHOP:
+        d = os.path.join(out, "p", prod["slug"])
+        write(os.path.join(d, "index.html"), redirect(prod))
+        write(os.path.join(d, "service-worker.js"), RETIRE_SW)
+        if os.path.exists(os.path.join(d, "manifest.json")):
+            os.remove(os.path.join(d, "manifest.json"))
     if out != ROOT:
         for f in ("html-to-image.js", "icon-192.png", "icon-512.png", "apple-touch-icon.png"):
             shutil.copy(os.path.join(ROOT, f), os.path.join(out, f))
-        shutil.copytree(os.path.join(ROOT, "fonts"), os.path.join(out, "fonts"), dirs_exist_ok=True)
+        for d in ("fonts", "previews"):
+            shutil.copytree(os.path.join(ROOT, d), os.path.join(out, d), dirs_exist_ok=True)
     print("built →", out)
 
 
