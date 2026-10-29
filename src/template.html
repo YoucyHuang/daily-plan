@@ -752,19 +752,11 @@
 
   /* ═════════════════ 游戏化界面 ═════════════════ */
   .game-hud { display:flex; align-items:center; gap:14px; margin:2px 0 14px; }
-  .buddy { position:relative; flex:none; width:88px; height:82px; padding:0; border:0; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .buddy { position:relative; flex:none; width:72px; height:90px; padding:0; border:0; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .buddy svg { width:100%; height:100%; overflow:visible; transform:scale(var(--grow, 1)); transform-origin:50% 95%; transition:transform .4s; }
-  .buddy .b-body { fill:var(--buddy, color-mix(in srgb, var(--sage) 38%, #fff)); stroke:var(--ink-1); stroke-width:3.2; }
-  .buddy .b-ant, .buddy .b-arm { fill:none; stroke:var(--ink-1); stroke-width:3.2; stroke-linecap:round; }
-  .buddy .b-tip { fill:#ffc21a; stroke:var(--ink-1); stroke-width:2.4; }
-  .buddy .b-shadow { fill:rgba(0,0,0,.12); }
-  .buddy .b-blush { fill:#ff8fb1; opacity:.55; }
-  .buddy .m { display:none; fill:var(--ink-1); stroke:var(--ink-1); stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
-  .buddy .m path { fill:none; }
-  .buddy .m .hl { fill:#fff; stroke:none; }
-  .buddy .m text { font:700 15px/1 "Jost", sans-serif; stroke:none; fill:var(--ink-3); }
-  .buddy .m .st { fill:#ffc21a; stroke-width:2; }
-  .buddy .m .mo { fill:#ff6b8b; }
+  .buddy .m, .wk-buddy .m { display:none; }
+  .buddy .m text, .wk-buddy .m text { font:700 64px/1 "Jost", sans-serif; fill:#8C7BE0; }
+  .buddy[data-mood="sleep"] .b-eyes, .buddy[data-mood="party"] .b-eyes { display:none; }
   .buddy[data-mood="sleep"] .m-sleep, .buddy[data-mood="ok"] .m-ok, .buddy[data-mood="first"] .m-first,
   .buddy[data-mood="party"] .m-party, .buddy[data-mood="worry"] .m-worry, .buddy[data-mood="cross"] .m-cross { display:inline; }
   .buddy[data-mood="sleep"] svg { animation:breathe 3.2s ease-in-out infinite; }
@@ -882,17 +874,13 @@
   .wk-days small { font-size:26px; color:var(--ink-soft); }
   .wk-lv { margin-top:40px; font-size:34px; font-weight:700; }
   .wk-buddy { position:absolute; left:96px; right:96px; bottom:150px; display:flex; align-items:center; gap:28px; }
-  .wk-buddy svg { width:220px; height:200px; flex:none; overflow:visible; }
-  .wk-buddy .b-body { fill:color-mix(in srgb, var(--accent) 40%, #fff); stroke:var(--ink); stroke-width:3.2; }
-  .wk-buddy .b-ant, .wk-buddy .b-arm { fill:none; stroke:var(--ink); stroke-width:3.2; stroke-linecap:round; }
-  .wk-buddy .b-tip { fill:#ffc21a; stroke:var(--ink); stroke-width:2.4; } .wk-buddy .b-shadow { fill:rgba(0,0,0,.12); } .wk-buddy .b-blush { fill:#ff8fb1; opacity:.55; }
-  .wk-buddy .m { display:none; stroke:var(--ink); fill:var(--ink); stroke-width:3.2; stroke-linecap:round; } .wk-buddy .m path { fill:none; } .wk-buddy .m .hl { fill:#fff; stroke:none; }
+  .wk-buddy svg { width:176px; height:220px; flex:none; overflow:visible; }
   .wk-buddy .m-ok { display:inline; }
   .wk-buddy p { font-size:40px; font-weight:700; line-height:1.4; }
   .wk-foot { position:absolute; left:96px; right:96px; bottom:72px; font:500 28px/1 "Jost","Noto Sans SC", sans-serif; letter-spacing:.14em; color:var(--ink-soft); }
 
   @media (max-width:760px) {
-    .buddy { width:76px; height:72px; }
+    .buddy { width:62px; height:78px; }
     :root .today-wrap .today-head h1, :root[data-skin] .today-wrap .today-head h1 { font-size:24px; margin:0 0 10px; }
     .today-wrap .today-date { font-size:13px; }
     .hud-pill { padding:4px 8px 4px 6px; } .hud-pill b { font-size:15px; }
@@ -941,18 +929,34 @@
         <!-- 游戏状态条：小Y + 连胜 / 星星 / 徽章 + 等级 -->
         <div class="game-hud">
           <button class="buddy" id="buddy" data-mood="sleep" aria-label="小Y">
-            <svg viewBox="0 0 120 112" aria-hidden="true">
-              <ellipse class="b-shadow" cx="60" cy="106" rx="32" ry="5"/>
-              <path class="b-ant" d="M60 16C58 8 61 3 68 1"/><circle class="b-tip" cx="69" cy="2" r="5"/>
-              <path class="b-body" d="M60 15C86 13 105 31 104 59C103 85 86 102 60 101C33 100 16 85 16 58C16 32 34 17 60 15Z"/>
-              <path class="b-arm" d="M18 66C10 64 6 70 9 76M102 66C110 64 114 70 111 76"/>
-              <g class="m m-sleep"><path d="M40 55q6 5 12 0M68 55q6 5 12 0"/><path d="M53 74q7 3 14 0"/><text x="88" y="30">z</text><text x="97" y="20">z</text></g>
-              <g class="m m-ok"><circle cx="46" cy="54" r="5.5"/><circle cx="74" cy="54" r="5.5"/><circle class="hl" cx="48" cy="52" r="1.8"/><circle class="hl" cx="76" cy="52" r="1.8"/><path d="M50 71q10 9 20 0"/></g>
-              <g class="m m-first"><circle cx="46" cy="54" r="5.5"/><circle cx="74" cy="54" r="5.5"/><circle class="hl" cx="48" cy="52" r="1.8"/><circle class="hl" cx="76" cy="52" r="1.8"/><path d="M52 70q8 6 16 0"/></g>
-              <g class="m m-party"><path class="st" d="M46 46l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/><path class="st" d="M74 46l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8Z"/><path class="mo" d="M47 69q13 16 26 0Z"/></g>
-              <g class="m m-worry"><circle cx="46" cy="56" r="5"/><circle cx="74" cy="56" r="5"/><path d="M38 44l12 4M82 44l-12 4"/><path d="M52 76q8-6 16 0"/></g>
-              <g class="m m-cross"><circle cx="46" cy="55" r="5"/><circle cx="74" cy="55" r="5"/><path d="M53 74h14"/></g>
-              <circle class="b-blush" cx="36" cy="66" r="6"/><circle class="b-blush" cx="84" cy="66" r="6"/>
+            <svg viewBox="235 140 615 770" aria-hidden="true">
+              <ellipse cx="540" cy="880" rx="210" ry="24" fill="rgba(29,42,107,.16)"/>
+              <g fill="none" stroke-linecap="round"><path d="M478 690Q392 760 432 852M602 690Q688 760 648 852" stroke="#1D2A6B" stroke-width="44"/><path d="M478 690Q392 760 432 852M602 690Q688 760 648 852" stroke="#FFD6E4" stroke-width="24"/></g>
+              <g fill="#FFD6E4" stroke="#1D2A6B" stroke-width="10" stroke-linejoin="round"><path d="M450 850Q452 878 420 878L388 878Q368 878 372 862Q378 844 412 842Z"/><path d="M630 850Q628 878 660 878L692 878Q712 878 708 862Q702 844 668 842Z"/></g>
+              <g fill="none" stroke="#1D2A6B" stroke-linecap="round" stroke-linejoin="round"><path d="M410 520Q352 560 300 516M670 520Q735 548 784 486" stroke-width="16"/><path d="M296 512L252 500M296 512L258 470M296 512L284 458M296 512L320 470M788 482L834 474M788 482L830 442M788 482L806 430M788 482L770 438" stroke-width="12"/></g>
+              <g fill="#FFD6E4" stroke="#1D2A6B" stroke-width="10"><circle cx="296" cy="512" r="20"/><circle cx="788" cy="482" r="20"/></g>
+              <circle cx="296" cy="512" r="7" fill="#FFC61A"/><circle cx="788" cy="482" r="7" fill="#FFC61A"/>
+              <path d="M408 270L414 196L444 246L464 180L486 244L512 194L524 262Z" fill="#FFC61A" stroke="#1D2A6B" stroke-width="10" stroke-linejoin="round"/>
+              <path d="M612 256C610 214 626 192 650 184" fill="none" stroke="#1D2A6B" stroke-width="14" stroke-linecap="round"/>
+              <circle cx="664" cy="176" r="24" fill="#FFC61A" stroke="#1D2A6B" stroke-width="12"/>
+              <path d="M440 250L640 250Q692 250 690 302L670 650Q666 708 612 708L468 708Q414 708 410 650L390 302Q388 250 440 250Z" fill="#FFD6E4" stroke="#1D2A6B" stroke-width="18" stroke-linejoin="round"/>
+              <path d="M697 330q16-4 20-18q2-12-10-9M694 392q18 0 24-14M690 454q16 6 22-8q4-10-6-11M402 590q-18 4-20-12" fill="none" stroke="#1D2A6B" stroke-width="7" stroke-linecap="round"/>
+              <circle cx="440" cy="492" r="30" fill="#FF8FBA"/><circle cx="640" cy="492" r="30" fill="#FF8FBA"/>
+              <g class="b-eyes">
+                <rect x="450" y="332" width="66" height="102" rx="28" fill="#E8434F"/><rect x="564" y="332" width="66" height="102" rx="28" fill="#E8434F"/>
+                <path d="M463 368q6.5-8 13 0t13 0t13 0M463 390q6.5-8 13 0t13 0t13 0M463 412q6.5-8 13 0t13 0t13 0M577 368q6.5-8 13 0t13 0t13 0M577 390q6.5-8 13 0t13 0t13 0M577 412q6.5-8 13 0t13 0t13 0" fill="none" stroke="#9E1B32" stroke-width="6" stroke-linecap="round"/>
+                <g class="m m-cross" fill="#FFD6E4"><rect x="446" y="326" width="74" height="50"/><rect x="560" y="326" width="74" height="50"/></g>
+                <rect x="450" y="332" width="66" height="102" rx="28" fill="none" stroke="#1D2A6B" stroke-width="14"/><rect x="564" y="332" width="66" height="102" rx="28" fill="none" stroke="#1D2A6B" stroke-width="14"/>
+                <g fill="#fff"><circle cx="496" cy="352" r="8"/><circle cx="610" cy="352" r="8"/><circle cx="502" cy="368" r="3.5"/><circle cx="616" cy="368" r="3.5"/></g>
+              </g>
+              <circle cx="540" cy="466" r="11" fill="#F29BB5" stroke="#1D2A6B" stroke-width="7"/>
+              <g fill="none" stroke="#1D2A6B" stroke-width="5" stroke-linecap="round" opacity=".55"><path d="M516 610q5-8 10 0t10 0M546 628q5-8 10 0t10 0M522 646q5-8 10 0"/></g>
+              <g class="m m-sleep"><path d="M454 392q29 22 58 0M568 392q29 22 58 0" fill="none" stroke="#1D2A6B" stroke-width="14" stroke-linecap="round"/><ellipse cx="540" cy="530" rx="12" ry="9" fill="#FF6F8E" stroke="#1D2A6B" stroke-width="9"/><text x="716" y="262">z</text><text x="760" y="214">z</text></g>
+              <g class="m m-ok"><ellipse cx="540" cy="526" rx="17" ry="23" fill="#FF6F8E" stroke="#1D2A6B" stroke-width="10"/><ellipse cx="540" cy="532" rx="7" ry="9" fill="#C9375A"/></g>
+              <g class="m m-first"><path d="M508 518q32 30 64 0" fill="none" stroke="#1D2A6B" stroke-width="12" stroke-linecap="round"/></g>
+              <g class="m m-party"><g fill="#FFC61A" stroke="#1D2A6B" stroke-width="9" stroke-linejoin="round"><path d="M483 330l15 31 34 5-25 24 6 34-30-16-30 16 6-34-25-24 34-5Z"/><path d="M597 330l15 31 34 5-25 24 6 34-30-16-30 16 6-34-25-24 34-5Z"/></g><path d="M494 504q46 66 92 0Z" fill="#FF6F8E" stroke="#1D2A6B" stroke-width="10" stroke-linejoin="round"/></g>
+              <g class="m m-worry"><path d="M448 322l60-18M632 322l-60-18" fill="none" stroke="#1D2A6B" stroke-width="12" stroke-linecap="round"/><path d="M506 534q17-16 34 0t34 0" fill="none" stroke="#1D2A6B" stroke-width="11" stroke-linecap="round"/></g>
+              <g class="m m-cross"><path d="M512 528h56" fill="none" stroke="#1D2A6B" stroke-width="12" stroke-linecap="round"/></g>
             </svg>
           </button>
           <div class="hud-main">

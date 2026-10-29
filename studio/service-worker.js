@@ -1,5 +1,5 @@
 /* 每日计划 · 离线缓存（build.py 生成） */
-const CACHE = "daily-plan-studio-v12";
+const CACHE = "daily-plan-studio-v13";
 const ASSETS = ["./", "./index.html", "./manifest.json", "../html-to-image.js", "../fonts/fonts.css", "../icon-192.png", "../icon-512.png"];
 self.addEventListener("install", (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys()
