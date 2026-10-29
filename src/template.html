@@ -798,6 +798,11 @@
   .hud-level span { font-weight:600; color:var(--ink-1); white-space:nowrap; }
   .hud-bar { height:8px; border-radius:99px; background:var(--surface-2); overflow:hidden; }
   .hud-bar i { display:block; height:100%; width:0; border-radius:99px; background:linear-gradient(90deg, #ffc21a, #ff8a1a); transition:width .6s cubic-bezier(.3,.7,.3,1); }
+  .seal-card { display:flex; align-items:center; gap:12px; margin-bottom:12px; padding:10px 10px 10px 12px; border-radius:16px; background:var(--surface); border:1.5px dashed var(--sage); }
+  .seal-card[hidden] { display:none; }
+  .seal-card div { flex:1; min-width:0; } .seal-card b { display:block; font-size:14px; } .seal-card small { display:block; font-size:11.5px; color:var(--ink-3); line-height:1.5; }
+  .seal-card .btn { flex:none; white-space:nowrap; min-height:36px; padding:6px 12px; }
+  .seal-ico { flex:none; width:34px; height:34px; background:no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 8.5 12 4l8 4.5v9L12 22l-8-4.5Z' fill='%23ffe3a3' stroke='%23b5452e' stroke-width='1.3' stroke-linejoin='round'/><path d='M4 8.5 12 13l8-4.5M12 13v9' fill='none' stroke='%23b5452e' stroke-width='1.3'/><circle cx='12' cy='13' r='2.6' fill='%23b5452e'/></svg>"); }
   .quests { margin-bottom:16px; padding:10px 14px 8px; border-radius:16px; background:var(--surface); border:1.5px solid var(--rule); }
   .q-head { display:flex; justify-content:space-between; align-items:baseline; font-size:13px; font-weight:600; color:var(--ink-1); margin-bottom:4px; }
   .q-head small { color:var(--ink-3); font-weight:400; }
@@ -959,6 +964,12 @@
             </div>
             <div class="hud-level"><span id="hudTitle">Lv.1</span><div class="hud-bar"><i id="hudLv"></i></div><small id="hudLvText"></small></div>
           </div>
+        </div>
+        <div class="seal-card" id="sealCard" hidden>
+          <span class="seal-ico"></span>
+          <div><b id="sealTitle">给这个月封个存</b><small id="sealSub">数据只存在这台手机里，存一份到「文件」或 iCloud 才不怕丢</small></div>
+          <button class="btn primary" id="sealGo">一键封存</button>
+          <button class="install-x" id="sealLater" aria-label="过几天再提醒">×</button>
         </div>
         <div class="quests">
           <div class="q-head"><span>今日任务</span><small id="questN">0/3</small></div>
@@ -2396,14 +2407,26 @@
   });
 
   /* 备份：导出 / 导入 JSON（合并，同一天保留较新的） */
-  $("#btnBackup").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify({ app: "daily-plan", version: 1, days }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+  async function doBackup() {
     const d = new Date();
-    a.href = url; a.download = `每日计划备份_${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}.json`; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  });
+    const snap = window.GAME ? GAME.state() : null;
+    if (window.GAME) GAME.sealed();   // 先记上这次封存（含 +20 星），备份文件里就是最新的；取消了再退回去
+    const data = { app: "daily-plan", version: 2, exportedAt: d.toISOString(), days, palettes: palSel,
+      lastTheme: document.body.dataset.theme, game: window.GAME ? GAME.state() : undefined };
+    const name = `每日计划备份_${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}.json`;
+    const file = new File([JSON.stringify(data, null, 2)], name, { type: "application/json" });
+    try {
+      if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "每日计划备份" });   // 选「存储到文件」/ iCloud / 网盘
+      } else {
+        const url = URL.createObjectURL(file), a = document.createElement("a");
+        a.href = url; a.download = name; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+      return true;
+    } catch (e) { if (snap) GAME.rollback(snap); return false; }   // 用户取消
+  }
+  $("#btnBackup").addEventListener("click", doBackup);
   $("#btnRestore").addEventListener("click", () => $("#restoreFile").click());
   $("#restoreFile").addEventListener("change", (e) => {
     const f = e.target.files[0];
@@ -2419,8 +2442,10 @@
           if (!days[k] || (d.updatedAt || 0) > (days[k].updatedAt || 0)) { days[k] = d; n++; }
         });
         persist();
-        buildDrum();
-        alert(`已导入 ${n} 天的清单。`);
+        if (data.palettes) { Object.assign(palSel, data.palettes); savePal(); }
+        const gameBack = data.game && window.GAME ? GAME.restore(data.game) : false;
+        buildDrum(); renderAll();
+        alert(`已导入 ${n} 天的清单${gameBack ? "，星星、连胜、徽章和已解锁的主题也恢复了" : ""}。`);
       } catch (err) {
         alert("这个文件不是每日计划的备份。");
       }
@@ -2896,6 +2921,7 @@
     { id: "collector", name: "收藏家", desc: "拥有 3 个设计主题", test: () => ownedDesigned().length >= 3 },
     { id: "freeze", name: "失而复得", desc: "用补签卡救回一次连胜", test: () => G.frozen.length >= 1 },
     { id: "lv5", name: "升级达人", desc: "升到 5 级", test: () => levelInfo().lv >= 5 },
+    { id: "seal", name: "时间胶囊", desc: "第一次封存备份", test: () => !!G.backupAt },
   ];
   function badge(only) {
     const ctx = { cleared: onToday() && (G.awarded[TODAY()] || {}).clear };
@@ -3200,8 +3226,45 @@
   });
 
   function exported() { G.exports++; gsave(); quest("card"); badge("card"); }
-  window.GAME = { onMark, quest, badge, hud, swipeable, isOwned, askUnlock, decorateSwatches, exported };
-  autoFreeze(); decorateSwatches(); questsToday(); hud();
+
+  /* ── 封存（备份）：记满 3 天、超过 30 天没封存就提醒；每个月第一次封存 +20 星 ── */
+  const DAY_MS = 864e5;
+  function sealDue() {
+    const n = Object.keys(days).length, now = Date.now();
+    if (n < 3) return false;
+    if (G.snoozeAt && now - G.snoozeAt < 3 * DAY_MS) return false;
+    return !G.backupAt || now - G.backupAt > 30 * DAY_MS;
+  }
+  function sealCard() {
+    const due = sealDue();
+    $("#sealCard").hidden = !due;
+    if (!due) return;
+    const n = Object.keys(days).length;
+    $("#sealTitle").textContent = G.backupAt ? `上次封存是 ${Math.floor((Date.now() - G.backupAt) / DAY_MS)} 天前` : `你已经记了 ${n} 天，给它们封个存吧`;
+    $("#sealSub").textContent = "存一份到「文件」或 iCloud，换手机也不丢 · +20 星";
+  }
+  function sealed() {
+    const m = TODAY().slice(0, 7);
+    G.backupAt = Date.now(); G.snoozeAt = 0;
+    const first = (G.sealMonths || (G.sealMonths = [])).indexOf(m) < 0;
+    if (first) { G.sealMonths.push(m); award(20, null, true); }
+    gsave(); badge("seal"); sealCard();
+    toast(ICON.freeze, "封存好了", first ? "这个月的日子已经安全存起来 · +20 星" : "又存了一份，放心");
+    say("ok");
+  }
+  function rollback(g) { Object.keys(G).forEach((k) => delete G[k]); Object.assign(G, g); gsave(); hud(); sealCard(); }
+  function restore(g) {
+    if (!g || typeof g !== "object" || (g.earned || 0) <= G.earned) return false;
+    Object.keys(G).forEach((k) => delete G[k]);
+    Object.assign(G, g); gsave(); decorateSwatches(); hud(); sealCard();
+    return true;
+  }
+  $("#sealGo").addEventListener("click", () => doBackup());
+  $("#sealLater").addEventListener("click", () => { G.snoozeAt = Date.now(); gsave(); sealCard(); });
+  /* 让浏览器尽量别清掉本站数据（Chrome / 安卓有效；iPhone 装到主屏后更稳） */
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+  window.GAME = { onMark, quest, badge, hud, swipeable, isOwned, askUnlock, decorateSwatches, exported, sealed, restore, rollback, sealCard, state: () => JSON.parse(JSON.stringify(G)) };
+  autoFreeze(); decorateSwatches(); questsToday(); hud(); sealCard();
   setTimeout(() => say(mood()), 1200);
 
   /* ───────────────── 第一次打开：3 步引导 ───────────────── */
