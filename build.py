@@ -11,13 +11,13 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 10   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 11   # 改了代码就加 1，手机上装好的版本会自动换新
 SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
 STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")
 SHOP = [p for p in PRODUCTS if p["slug"] != "studio"]
-ALL = ["forest", "ocean", "morandi", "paper", "night", "lwf", "y2k", "bauhaus", "songyuan", "business", "autumn", "comic"]
+ALL = ["forest", "ocean", "morandi", "paper", "night", "lwf", "y2k", "bauhaus", "songyuan", "business", "autumn", "comic", "guai"]
 FREE = ["forest", "ocean", "morandi", "paper", "night", "lwf"]
 
 APP = {
@@ -29,6 +29,7 @@ APP = {
     "themeOf": {p["slug"]: p["themes"] for p in SHOP},
     "samples": {t: p["sample"] for p in SHOP if p.get("sample") for t in p["themes"]},
 }
+APP["samples"]["guai"] = ["晨起看一会儿窗外的树", "画十分钟速写", "读几页书", "出门走走 · 捡一片叶子", "安静地吃一顿饭", "睡前写一句话给自己"]
 
 
 def page(prod, up, preview, path, img):

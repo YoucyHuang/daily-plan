@@ -162,6 +162,7 @@
   [data-theme="songyuan"] { --bg:#c6a76a; --bg2:#d6bd85; --wash:transparent; --ink:#2e2618; --ink-soft:rgba(46,38,24,.62); --accent:#5d7c58; --line:rgba(43,42,39,.45); --line-soft:rgba(43,42,39,.18); --seal:#b23a2a; }
   [data-theme="business"] { --bg:#0b0d10; --bg2:#1a1e24; --wash:transparent; --ink:#f3efe6; --ink-soft:rgba(243,239,230,.6); --accent:#c8a96a; --line:rgba(200,169,106,.5); --line-soft:rgba(243,239,230,.14); --seal:#c8a96a; }
   [data-theme="autumn"]   { --bg:#e48a92; --bg2:#9db2a6; --wash:transparent; --ink:#2a1218; --ink-soft:rgba(42,18,24,.62); --accent:#2fe3c8; --line:rgba(42,18,24,.45); --line-soft:rgba(42,18,24,.2); --seal:#ff3f66; }
+  [data-theme="guai"]     { --bg:#eeebdb; --bg2:#f6f3e6; --wash:transparent; --ink:#3a2f25; --ink-soft:rgba(58,47,37,.62); --accent:#c2502f; --line:rgba(58,47,37,.45); --line-soft:rgba(58,47,37,.18); --seal:#c2502f; }
   [data-theme="comic"]    { --bg:#ffd23f; --bg2:#fff1a8; --wash:transparent; --ink:#111; --ink-soft:rgba(17,17,17,.65); --accent:#e23b2e; --line:#111; --line-soft:rgba(17,17,17,.3); --seal:#e23b2e; }
 
   /* 设计主题版式层 */
@@ -176,6 +177,9 @@
     font-family:var(--sans);
   }
   .lc .abs { position:absolute; }
+  .lc .gk-patch { position:absolute; filter:url(#gkBrush); mix-blend-mode:multiply; }
+  .lc.gk-paper::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:.35; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5 0 0 0 0 .45 0 0 0 0 .4 0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
   .lc .ck { display:inline-grid; place-items:center; flex:0 0 auto; }
   .lc .ck svg { width:62%; height:62%; overflow:visible; }
   .lc .ck path { fill:none; stroke:currentColor; stroke-linecap:round; stroke-linejoin:round; }
@@ -706,6 +710,23 @@
   :root[data-skin="autumn"] .today-head h1, :root[data-skin="autumn"] .arc-head h2 { font-weight:900; }
   :root[data-skin="autumn"] .brand-mark { border-radius:50%; background:repeating-radial-gradient(circle,#ff3f66 0 3px,#2fe3c8 3px 6px,#e48a92 6px 9px); }
 
+  /* 08 鬼怪：山水的光底、深褐细线、宋体、朱红点一下 */
+  :root[data-skin="guai"] {
+    --paper:#eeebdb; --paper-glass:rgba(238,235,219,.9); --surface:#f7f4e8; --surface-2:#e5e0c9;
+    --ink-1:#3a2f25; --ink-2:#5e5240; --ink-3:#8f8670; --rule:rgba(58,47,37,.22);
+    --sage:#c2502f; --sage-soft:#f1dccd; --clay:#c2502f; --clay-soft:#f1dccd;
+    --font-ui:"Noto Serif SC",serif; --font-body:"Noto Serif SC",serif; --font-head:"Noto Serif SC",serif;
+    --buddy:#e8dc8e;
+    --paper-bg:radial-gradient(45% 30% at 15% 10%,rgba(232,220,142,.55),transparent 70%),radial-gradient(40% 30% at 90% 30%,rgba(188,196,166,.5),transparent 70%),radial-gradient(50% 30% at 20% 95%,rgba(167,162,122,.35),transparent 70%),#eeebdb;
+    --shadow:0 1px 0 rgba(58,47,37,.12); --shadow-lg:0 16px 40px rgba(58,47,37,.18);
+  }
+  :root[data-skin="guai"] .controls, :root[data-skin="guai"] .t-item, :root[data-skin="guai"] dialog.day-dialog { border:1.5px solid rgba(58,47,37,.35); border-radius:4px 10px 6px 12px / 10px 5px 12px 6px; }
+  :root[data-skin="guai"] .btn, :root[data-skin="guai"] .field, :root[data-skin="guai"] .pal { border-radius:3px 8px 4px 9px / 8px 4px 9px 3px; }
+  :root[data-skin="guai"] .btn.primary { background:#3a2f25; border-color:#3a2f25; color:#f6f3e6; }
+  :root[data-skin="guai"] .today-head h1, :root[data-skin="guai"] .arc-head h2 { font-weight:400; letter-spacing:.24em; }
+  :root[data-skin="guai"] .brand-mark { background:transparent; border:2px solid #c2502f; color:#c2502f; border-radius:4px; }
+  :root[data-skin="guai"] .progress .bar i { background:#a7a27a; }
+
   /* 07 波普网点：黄底红点、粗黑框硬投影、漫画字 */
   :root[data-skin="comic"] {
     --paper:#fff3a0; --paper-glass:#fff3a0; --surface:#ffffff; --surface-2:#fff8c8;
@@ -973,7 +994,7 @@
     <section class="view" id="viewStudio">
       <aside class="controls">
         <div class="group">
-          <div class="g-label">配色</div>
+          <div class="g-label">经典配色（已并入主题）</div>
           <div class="swatches">
             <button class="swatch" data-set-theme="forest"><i style="background:#2a4135;--dot:#a9bd92"></i>森林</button>
             <button class="swatch" data-set-theme="ocean"><i style="background:#22465d;--dot:#86b9cc"></i>海洋</button>
@@ -984,8 +1005,9 @@
         </div>
 
         <div class="group">
-          <div class="g-label">设计主题</div>
+          <div class="g-label">主题</div>
           <div class="swatches design">
+            <button class="swatch" data-set-theme="classic"><i style="background:linear-gradient(135deg,#22382d 50%,#ece3d2 50%);--dot:#c9b37c"></i>经典</button>
             <button class="swatch" data-set-theme="lwf"><i style="background:linear-gradient(135deg,#a9c1ee,#eba3c3);--dot:#1f44a8"></i>怪朋友</button>
             <button class="swatch" data-set-theme="y2k"><i style="background:linear-gradient(135deg,#ffd7f0,#d3f3ff);--dot:#ff5fb8"></i>Y2K</button>
             <button class="swatch" data-set-theme="bauhaus"><i style="background:conic-gradient(#d7352a 0 33%,#f2b82e 0 66%,#1f4e9c 0);--dot:#1a1a1a"></i>包豪斯</button>
@@ -993,6 +1015,7 @@
             <button class="swatch" data-set-theme="business"><i style="background:radial-gradient(circle,#1a1e24 40%,#e9d18f 42% 48%,#0b0d10 50%);--dot:#a3142f"></i>机芯</button>
             <button class="swatch" data-set-theme="autumn"><i style="background:repeating-radial-gradient(circle at 20% 20%,#ff3f66 0 3px,#9db2a6 3px 6px,#2fe3c8 6px 8px,#e48a92 8px 11px);--dot:#2a1218"></i>涟漪</button>
             <button class="swatch" data-set-theme="comic"><i style="background:radial-gradient(#e8553e 30%,transparent 32%) 0 0/7px 7px,#f8e2cf;--dot:#f7d21e"></i>波普</button>
+            <button class="swatch" data-set-theme="guai"><i style="background:radial-gradient(circle at 30% 35%,#e8dc8e 0 30%,transparent 32%),radial-gradient(circle at 70% 65%,#bcc4a6 0 32%,transparent 34%),#eeebdb;--dot:#c2502f"></i>鬼怪</button>
           </div>
         </div>
 
@@ -1179,7 +1202,8 @@
     { text: "睡前复盘 · 感恩三件事", mark: "empty" },
   ];
   const CLASSIC = ["forest", "ocean", "morandi", "paper", "night"];
-  const DESIGNED = ["lwf", "y2k", "bauhaus", "songyuan", "business", "autumn", "comic"];
+  const DESIGNED = ["lwf", "y2k", "bauhaus", "songyuan", "business", "autumn", "comic", "guai"];
+  const CLASSIC_NAMES = ["森林", "海洋", "莫兰迪", "宣纸", "夜墨"];
   const ALL_THEMES = [...CLASSIC, ...DESIGNED];
   /* 每款产品只带自己的主题：build.py 会在 <head> 里写入 window.PRODUCT。
      没有写入时（总控台 / 直接打开模板）= 全部主题，要用主理人的码解锁。 */
@@ -1282,7 +1306,8 @@
   const isDesigned = () => DESIGNED.includes(document.body.dataset.theme);
   function setTheme(name, save) {
     document.body.dataset.theme = name;
-    swatches.forEach((x) => x.classList.toggle("active", x.dataset.setTheme === name));
+    swatches.forEach((x) => x.classList.toggle("active", x.dataset.setTheme === name || (x.dataset.setTheme === "classic" && CLASSIC.includes(name))));
+    if (CLASSIC.includes(name)) { palSel.classic = CLASSIC.indexOf(name); }
     page.classList.toggle("designed", isDesigned());
     document.body.classList.toggle("designed-theme", isDesigned());
     buildPalList();
@@ -1295,12 +1320,15 @@
     if (save) { render(); if (days[currentKey()]) saveDay(); }
   }
   swatches.forEach((b) => b.addEventListener("click", () => {
-    const t = b.dataset.setTheme;
+    let t = b.dataset.setTheme;
+    if (t === "classic") t = CLASSIC[palSel.classic || 0] || "forest";
     if (window.GAME && !GAME.isOwned(t)) { GAME.askUnlock(t); return; }
     setTheme(t, true);
   }));
   /* 只显示本款产品里有的主题；只有一个设计主题时，整组按钮都收起来，只留「配色方案」 */
-  swatches.forEach((b) => { if (!THEMES.includes(b.dataset.setTheme)) b.hidden = true; });
+  swatches.forEach((b) => { const t = b.dataset.setTheme; if (t === "classic" ? !THEMES.some((x) => CLASSIC.includes(x)) : !THEMES.includes(t)) b.hidden = true; });
+  /* 经典配色不再单独成栏：在「主题」里点「经典」，5 个颜色出现在「配色方案」里 */
+  document.querySelectorAll(".swatches:not(.design)").forEach((g) => { g.closest(".group").hidden = true; });
   document.querySelectorAll(".swatches").forEach((g) => {
     const shown = [...g.children].filter((b) => !b.hidden).length;
     if (!shown || (g.classList.contains("design") && THEMES.length === 1)) g.closest(".group").hidden = true;
@@ -1310,7 +1338,16 @@
 
   /* 配色方案：每个设计主题 7 套 */
   function buildPalList() {
-    const t = document.body.dataset.theme, list = PALETTES[t];
+    const t = document.body.dataset.theme;
+    if (CLASSIC.includes(t)) {   // 经典：5 个经典配色当作它的配色方案
+      const cur = CLASSIC.indexOf(t);
+      $("#palGroup").hidden = false;
+      $("#palName").textContent = CLASSIC_NAMES[cur];
+      $("#palList").innerHTML = CLASSIC.map((k, i) => { const el = document.querySelector(`.swatch[data-set-theme="${k}"] i`);
+        return `<button class="pal${i === cur ? " active" : ""}" data-classic="${k}"><span class="dots"><i style="${el ? el.getAttribute("style") : ""}"></i></span>${CLASSIC_NAMES[i]}</button>`; }).join("");
+      return;
+    }
+    const list = PALETTES[t];
     $("#palGroup").hidden = !list;
     if (!list) return;
     const cur = Math.min(palSel[t] || 0, list.length - 1);
@@ -1320,6 +1357,8 @@
     ).join("");
   }
   $("#palList").addEventListener("click", (e) => {
+    const cb = e.target.closest("[data-classic]");
+    if (cb) { setTheme(cb.dataset.classic, true); return; }
     const b = e.target.closest("[data-pal]");
     if (!b) return;
     palSel[document.body.dataset.theme] = Number(b.dataset.pal);
@@ -1574,6 +1613,15 @@
       { name:"夜涟漪", base:["#1a1830","#24304a","#2a1a2e","#1e2236"], hues:["#ff4f8a","#36e0ff","#ffd23a","#8a5cff"], ink:"#f6f2ff", dark:true, spark:.05, grain:.42,
         src:[{ x:250, y:300, l:118, sx:1, sy:1.15 }, { x:1000, y:1460, l:133, sx:1.1, sy:1 }], focus:[520, 600] },
     ],
+    guai: [
+      { name:"山水 · 春", v:"shan", seed:11, season:"Spring", motto:"Mountains far, things near.", ground:"#eeebdb", light:["#e8dc8e","#f6f3e6"], mid:["#bcc4a6","#a7a27a","#d8be80"], ink:"#3a2f25", ink2:"#74765e", dot:"#3e66b0", red:"#c2502f" },
+      { name:"山水 · 夏", v:"shan", seed:31, season:"Summer", motto:"Green shade, slow noon.", ground:"#e9eedf", light:["#cfe3b0","#f3f5ea"], mid:["#8fb39a","#a9b98a","#c9d9a8"], ink:"#2f3328", ink2:"#5f6a55", dot:"#3e66b0", red:"#c2502f" },
+      { name:"山水 · 秋", v:"shan", seed:23, season:"Autumn", motto:"One branch, one thing.", ground:"#f3ebda", light:["#edc25a","#f7f0e1"], mid:["#e59a3c","#d9c9a8","#c9693a"], ink:"#4a3423", ink2:"#8a6a45", dot:"#6f8a55", red:"#b9412a" },
+      { name:"山水 · 冬", v:"shan", seed:41, season:"Winter", motto:"Bare branch, clear sky.", ground:"#ecebe7", light:["#e3e1da","#f5f4f0"], mid:["#b9bdb9","#9ca3a6","#c9c4b8"], ink:"#2e2c2a", ink2:"#6e6c68", dot:"#b9412a", red:"#b9412a" },
+      { name:"本真 · 素底", v:"ben", seed:5, motto:"A gaze turned outward, examining inward.", ground:"#eeece6", bg:["#c6c8bf","#e1ded6","#d6ceb9"], panel:"#f3efe6", flesh:["#d9b98a","#c9a27a","#e3c2a2","#886a4b"], ink:"#312724", head:"#312724", red:"#b8382a", sealC:"#b8382a", cool:"#7e95a6" },
+      { name:"本真 · 赭红", v:"ben", seed:9, motto:"Look, and be looked at.", ground:"#8e4a30", bg:["#a85a3a","#6e2f22","#b9874f","#9d8857"], panel:"#efe6d2", flesh:["#d9b98a","#c9a27a","#e3c2a2","#b68d5f"], ink:"#312724", head:"#f1e6cf", red:"#c9433a", sealC:"#f1e6cf", cool:"#9db4be" },
+      { name:"本真 · 橄榄", v:"ben", seed:13, motto:"Still, and seeing.", ground:"#adaa77", bg:["#9c995f","#c2be8a","#8a8650","#b8b486"], panel:"#f0ebda", flesh:["#d9b98a","#c9a27a","#e3c2a2","#a68a5f"], ink:"#2f2a1c", head:"#2f2a1c", red:"#b8382a", sealC:"#b8382a", cool:"#8ba08f" },
+    ],
     comic: [
       { name:"泪",     v:"tear",    skin:"#f8e2cf", dot:"#e8553e", hair:"#f7d21e", iris:"#6fa8e0", cap:"#fff3a0", ok:"#e23b2e", no:"#1e4fb0", sw:["#f8e2cf","#e8553e","#f7d21e"] },
       { name:"思绪",   v:"thought", dot:"#1f3aa8", band:"#bcd5dc", red:"#a61e2a", cream:"#f1e6c6", ok:"#a61e2a", no:"#1f3aa8", sw:["#ffffff","#1f3aa8","#a61e2a"] },
@@ -1589,6 +1637,7 @@
     lwf: (p) => [p.base, p.a1, p.ink], y2k: (p) => [p.g[1], p.g[2], p.hot], bauhaus: (p) => p.c,
     songyuan: (p) => [p.silk, p.leaf, p.petal], business: (p) => [p.bg, p.metal[1], p.jewel],
     autumn: (p) => [p.base[0], p.hues[0], p.hues[2]], comic: (p) => p.sw,
+    guai: (p) => p.v === "shan" ? [p.ground, p.light[0], p.mid[0]] : [p.ground, p.flesh[0], p.red],
   };
   const rng = (seed) => () => (seed = seed * 16807 % 2147483647) / 2147483647;
   /* 浅色上打勾用深色 */
@@ -1869,6 +1918,99 @@
       </div>`; },
   };
 
+  /* ── 鬼怪：来自黄鈺茜的「山水」「本真」两组画 ──
+       山水：奶黄灰绿的半透明色块 + 深褐枯枝线，70% 光的底 / 25% 中间调 / 5% 线
+       本真：正面居中，暖赭碎笔叠出的体，一抹唇红、一点冷色，毛边画布面板
+     手绘滤镜放在卡片自己里面，导出图片时一起带走。 */
+  const GK_FILTERS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="gkRough" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter>
+    <filter id="gkBrush" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".013" numOctaves="3" seed="7"/><feDisplacementMap in="SourceGraphic" scale="70"/><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="gkDry" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="5" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="7" result="d"/><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="9" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.75" result="m"/><feComposite in="d" in2="m" operator="in"/></filter>
+    <filter id="gkEdge" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".02" numOctaves="3" seed="11"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter>
+    <filter id="gkDab" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="3" seed="4"/><feDisplacementMap in="SourceGraphic" scale="22"/><feGaussianBlur stdDeviation=".8"/></filter>
+  </svg>`;
+  function gkKit(seed) {
+    const R = rng(seed);
+    const patch = (x, y, w, h, c, op) => { const r = () => Math.round(35 + R() * 30);
+      return `<i class="gk-patch" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:${c};opacity:${op};border-radius:${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%"></i>`; };
+    const strokes = (x, y, w, h, colors, n, sz, op) => { let s = "";
+      for (let i = 0; i < n; i++) { const a = sz[0] + R() * (sz[1] - sz[0]), b = a * (.45 + R() * .7);
+        s += patch(Math.round(x + R() * (w - a)), Math.round(y + R() * (h - b)), Math.round(a), Math.round(b), colors[i % colors.length], (op[0] + R() * (op[1] - op[0])).toFixed(2)); }
+      return s; };
+    const dabs = (x, y, w, h, colors, n, sz, op) => { let s = "";
+      for (let i = 0; i < n; i++) { const a = sz[0] + R() * (sz[1] - sz[0]), b = a * (.22 + R() * .25), r = Math.round(-35 + R() * 70);
+        s += `<i class="gk-patch" style="filter:url(#gkDab);left:${Math.round(x + R() * (w - a))}px;top:${Math.round(y + R() * (h - b))}px;width:${Math.round(a)}px;height:${Math.round(b)}px;background:${colors[i % colors.length]};opacity:${(op[0] + R() * (op[1] - op[0])).toFixed(2)};border-radius:40% 55% 45% 60%;transform:rotate(${r}deg)"></i>`; }
+      return s; };
+    return { patch, strokes, dabs };
+  }
+  /* 手绘勾选框：s = '' 空 / c 勾 / x 叉 */
+  const gkBox = (s, ink, red, size = 48) => {
+    const m = s === "c" ? `<path d="M11 26c4 3 7 7 9.5 11C25 27 31 19 40 12" stroke="${ink}" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      : s === "x" ? `<path d="M13 13c8 7 15 15 24 25M38 12c-9 8-16 16-25 26" stroke="${red}" stroke-width="3.4" fill="none" stroke-linecap="round"/>` : "";
+    return `<svg width="${size}" height="${size}" viewBox="0 0 50 50" style="flex:0 0 auto;overflow:visible;filter:url(#gkRough)"><path d="M6 7c13-1.5 26-1 38 .5c1 12 .8 24-.5 36c-12 1-25 1-37-.5C5 31 5.2 19 6 7Z" fill="none" stroke="${ink}" stroke-width="2" stroke-linejoin="round" opacity=".85"/>${m}</svg>`;
+  };
+  const gkLine = (w, c, op = .4) => `<svg width="${w}" height="8" viewBox="0 0 ${w} 8" style="display:block;overflow:visible;filter:url(#gkRough)"><path d="M0 4C${w * .3} 2.5 ${w * .6} 5.5 ${w} 3.5" stroke="${c}" stroke-width="1.6" fill="none" opacity="${op}" stroke-linecap="round"/></svg>`;
+  const gkSeal = (c, sz = 72) => `<span style="display:grid;place-items:center;width:${sz}px;height:${sz}px;border:2px solid ${c};color:${c};font-family:var(--serif);font-size:${sz * .58}px;border-radius:4px;filter:url(#gkRough)">茜</span>`;
+
+  /* 山水构图 */
+  function gkShan(c, p) {
+    const K = gkKit(p.seed), r = c.fit(640, 94, 40);
+    return `<div class="lc gk-paper" style="background:${p.ground};font-family:var(--serif);color:${p.ink}">${GK_FILTERS}
+      ${K.patch(-120, -80, 760, 520, p.light[0], .75)}${K.patch(520, -120, 700, 460, p.light[1], .8)}
+      ${K.patch(640, 260, 520, 380, p.mid[0], .45)}${K.patch(-160, 980, 620, 520, p.mid[1], .5)}
+      ${K.patch(560, 1240, 640, 320, p.light[0], .6)}${K.patch(180, 1310, 520, 220, p.mid[2], .45)}
+      ${K.strokes(0, 0, 1080, 360, [p.light[0], p.mid[0], p.light[1]], 8, [120, 260], [.25, .5])}
+      ${K.strokes(0, 1280, 1080, 160, [p.mid[0], p.mid[1], p.mid[2]], 8, [90, 200], [.25, .5])}
+      ${c.photo}
+      <svg class="abs" style="left:0;top:0;filter:url(#gkDry)" width="1080" height="1440" viewBox="0 0 1080 1440" fill="none" stroke="${p.ink}" stroke-linecap="round">
+        <path d="M120 1440C112 1300 130 1180 108 1060C92 960 118 880 150 800C170 740 160 690 182 640" stroke-width="13"/>
+        <path d="M128 1150C150 1110 196 1092 226 1046" stroke-width="7"/>
+        <path d="M150 800C120 760 96 738 70 716" stroke-width="6"/>
+        <path d="M182 640C196 600 222 586 238 552M182 640C170 610 150 596 140 572" stroke-width="4.5"/>
+        <path d="M206 1440C214 1370 200 1320 222 1270C236 1240 228 1210 246 1186" stroke-width="7" opacity=".8"/>
+        <path d="M1080 150C1020 166 980 190 930 196C900 200 880 214 858 236" stroke-width="7" opacity=".9"/>
+        <path d="M960 186C950 160 954 140 944 118" stroke-width="4" opacity=".9"/>
+      </svg>
+      <i class="abs" style="left:236px;top:546px;width:14px;height:14px;border-radius:50%;background:${p.dot};filter:url(#gkRough)"></i>
+      <div class="abs" style="left:300px;right:96px;top:150px">
+        <div style="font-family:var(--en);font-size:24px;letter-spacing:.3em;text-transform:uppercase;color:${p.ink2}">Daily Plan · ${p.season}</div>
+        <div style="font-size:124px;letter-spacing:.24em;line-height:1.15;margin-top:18px">每日计划</div>
+        <div style="font-family:var(--en);font-style:italic;font-size:36px;color:${p.ink2};margin-top:6px">${p.motto}</div>
+        <div style="font-size:28px;letter-spacing:.12em;margin-top:30px;color:${p.ink2}">${esc(c.date)} ${c.wcn}</div>
+      </div>
+      <div class="abs" style="left:300px;right:96px;top:600px">
+        ${gkLine(684, p.ink, .55)}
+        ${c.rows((it, s) => `<div style="display:flex;align-items:center;gap:30px;height:${r.h - 8}px">${c.b(it, gkBox(s, p.ink, p.red, 48))}${c.t(it, `font-size:${r.f}px;letter-spacing:.06em;${s === "x" ? "opacity:.5" : ""}`)}</div>${gkLine(684, p.ink, .25)}`)}
+      </div>
+      <div class="abs" style="right:96px;bottom:96px;display:flex;align-items:flex-end;gap:28px;color:${p.ink2}">
+        <span style="font-family:var(--en);font-size:24px;letter-spacing:.24em;text-transform:uppercase">Guai · ${esc(p.name)}</span>${gkSeal(p.red)}
+      </div>
+    </div>`;
+  }
+  /* 本真构图 */
+  function gkBen(c, p) {
+    const K = gkKit(p.seed), r = c.fit(660, 91, 40);
+    return `<div class="lc gk-paper" style="background:${p.ground};font-family:var(--serif)">${GK_FILTERS}
+      ${K.dabs(0, 0, 1080, 1440, p.bg, 120, [90, 260], [.12, .3])}
+      ${c.photo}
+      <div class="abs" style="left:150px;top:580px;width:780px;height:730px;background:${p.panel};filter:url(#gkEdge)"></div>
+      <div class="abs" style="left:150px;top:580px;width:780px;height:730px;overflow:hidden">${K.dabs(-40, -40, 860, 810, p.flesh, 150, [50, 170], [.08, .22])}</div>
+      <div class="abs" style="left:0;right:0;top:120px;text-align:center;color:${p.head}">
+        <div style="font-family:var(--en);font-size:24px;letter-spacing:.32em;text-transform:uppercase;opacity:.8">Authenticity · 鬼怪</div>
+        <div style="font-size:120px;letter-spacing:.22em;padding-left:.22em;line-height:1.2;margin-top:24px">每日计划</div>
+      </div>
+      <svg class="abs" style="left:450px;top:348px;filter:url(#gkDry);overflow:visible" width="180" height="36" viewBox="0 0 200 40"><path d="M6 22C40 10 70 8 100 14C130 8 162 10 194 22C160 30 130 32 100 28C70 32 40 30 6 22Z" fill="${p.red}"/></svg>
+      <div class="abs" style="left:0;right:0;top:410px;text-align:center;font-size:28px;letter-spacing:.14em;color:${p.head};opacity:.85">
+        <i style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${p.cool};vertical-align:middle;margin-right:26px"></i>${esc(c.date)} ${c.wcn}<i style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${p.cool};vertical-align:middle;margin-left:26px"></i>
+        <div style="font-family:var(--en);font-style:italic;font-size:30px;letter-spacing:.02em;margin-top:12px">${p.motto}</div>
+      </div>
+      <div class="abs" style="left:230px;right:230px;top:625px;color:${p.ink}">
+        ${c.rows((it, s) => `<div style="display:flex;align-items:center;gap:30px;height:${r.h}px">${c.b(it, gkBox(s, p.ink, p.red, 46))}${c.t(it, `font-size:${r.f}px;letter-spacing:.06em;${s === "x" ? "opacity:.5" : ""}`)}</div>`)}
+      </div>
+      <div class="abs" style="left:0;right:0;bottom:50px;display:flex;justify-content:center">${gkSeal(p.sealC, 62)}</div>
+    </div>`;
+  }
+
   const LAYOUTS = {
     /* 01 Little Weird Friends：雾光 + 手写 + 白涂鸦 */
     lwf(c, p) {
@@ -2027,6 +2169,8 @@
     },
     /* 07 波普网点：7 套配色各是一种构图（见 POP） */
     comic(c, p) { return POP[p.v](c, p); },
+    /* 08 鬼怪：山水 / 本真两种构图 */
+    guai(c, p) { return p.v === "shan" ? gkShan(c, p) : gkBen(c, p); },
   };
 
   function renderLayout() {
@@ -2611,6 +2755,9 @@
     autumn:   { panel: "background:rgba(242,239,233,.92);border:0;border-radius:0;box-shadow:0 0 0 14px rgba(242,239,233,.6)",
                 title: "font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:34px;color:#2a1218", sub: "color:#2a1218;font-family:'Jost',sans-serif",
                 input: "background:#fff;border:2.5px solid #2a1218;border-radius:99px;color:#2a1218;font-family:'Jost',sans-serif;font-weight:500", btn: "background:#2a1218;color:#f2efe9;border:0;border-radius:99px;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.2em", err: "#ff3f66", mark: "background:repeating-radial-gradient(circle,#ff3f66 0 3px,#2fe3c8 3px 6px,#e48a92 6px 9px);color:#fff;border-radius:50%" },
+    guai:     { panel: "background:rgba(246,243,230,.92);border:1.5px solid rgba(58,47,37,.4);border-radius:4px 10px 6px 12px / 10px 5px 12px 6px",
+                title: "font-family:'Noto Serif SC',serif;font-size:32px;letter-spacing:.2em;color:#3a2f25", sub: "color:#74765e",
+                input: "background:#fbf9f0;border:1.5px solid rgba(58,47,37,.4);border-radius:3px;color:#3a2f25", btn: "background:#3a2f25;color:#f6f3e6;border:0;border-radius:3px;letter-spacing:.24em", err: "#c2502f", mark: "background:transparent;border:2px solid #c2502f;color:#c2502f;border-radius:4px" },
     comic:    { panel: "background:#fff;border:7px solid #111;border-radius:0;box-shadow:12px 12px 0 #111",
                 title: "font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:34px;color:#111", sub: "color:#111;font-family:'Bangers',sans-serif;font-size:22px;letter-spacing:.04em",
                 input: "background:#fff3a0;border:5px solid #111;border-radius:0;color:#111;font-family:'Bangers',sans-serif;font-size:28px", btn: "background:#e23b2e;color:#fff;border:5px solid #111;border-radius:0;font-family:'Bangers',sans-serif;font-size:30px;letter-spacing:.06em", err: "#e23b2e", mark: "background:#f7d21e;border:5px solid #111;color:#111;border-radius:0" },
@@ -2717,6 +2864,7 @@
     business: ["实习生", "专员", "主管", "经理", "总监", "合伙人", "首席执行官"],
     autumn: ["一滴水", "一圈涟漪", "层层波纹", "潮汐", "海流", "大洋", "涟漪本身"],
     comic: ["路人甲", "小跟班", "搭档", "主角", "超级英雄", "传奇英雄", "宇宙级英雄"],
+    guai: ["小鬼", "游魂", "山精", "木魅", "画中仙", "山鬼", "鬼怪本尊"],
   };
   function levelInfo() {
     let lv = 1; while (lv < LV.length && G.earned >= LV[lv]) lv++;
@@ -2966,8 +3114,8 @@
     const map = PRODUCT.themeOf || {};
     return Object.keys(map).some((slug) => map[slug].includes(t) && (() => { try { return !!localStorage.getItem("dailyplan.unlock." + slug); } catch (e) { return false; } })());
   }
-  function isOwned(t) { return FREE_THEMES.includes(t) || G.owned.includes(t) || legacyOwned(t); }
-  const THEME_NAME = { lwf: "Little Weird Friends", y2k: "Y2K 千禧", bauhaus: "包豪斯", songyuan: "宋人花鸟", business: "机芯", autumn: "涟漪", comic: "波普网点" };
+  function isOwned(t) { if (t === "classic") return CLASSIC.some(isOwned); return FREE_THEMES.includes(t) || G.owned.includes(t) || legacyOwned(t); }
+  const THEME_NAME = { lwf: "Little Weird Friends", y2k: "Y2K 千禧", bauhaus: "包豪斯", songyuan: "宋人花鸟", business: "机芯", autumn: "涟漪", comic: "波普网点", guai: "鬼怪" };
   let wantTheme = null;
   function askUnlock(t) {
     wantTheme = t;
@@ -2975,7 +3123,7 @@
     $("#unCost").textContent = COST; $("#unHave").textContent = G.stars;
     $("#unBuy").disabled = G.stars < COST;
     $("#unErr").textContent = ""; $("#unCode").value = "";
-    $("#unPreview").src = `${PRODUCT.base || ""}previews/${({ lwf: "weird", y2k: "y2k", bauhaus: "bauhaus", songyuan: "songhua", business: "calibre", autumn: "ripple", comic: "pop" })[t]}.jpg`;
+    $("#unPreview").src = `${PRODUCT.base || ""}previews/${({ lwf: "weird", y2k: "y2k", bauhaus: "bauhaus", songyuan: "songhua", business: "calibre", autumn: "ripple", comic: "pop", guai: "guai" })[t]}.jpg`;
     const d = $("#unlockDialog"); d.showModal ? d.showModal() : d.setAttribute("open", "");
   }
   function grant(t, how) {
