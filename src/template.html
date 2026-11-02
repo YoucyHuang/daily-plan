@@ -252,7 +252,8 @@
   .view { display:none; }
   body[data-view="today"]   #viewToday,
   body[data-view="studio"]  #viewStudio,
-  body[data-view="archive"] #viewArchive { display:block; }
+  body[data-view="archive"] #viewArchive,
+  body[data-view="me"]      #viewMe { display:block; }
   body[data-view="studio"]  #viewStudio { display:grid; }
 
   /* 通用按钮 / 输入框 */
@@ -805,6 +806,33 @@
   #questList li.ok { color:var(--ink-3); text-decoration:line-through; }
   #questList li.ok .qd { background:#36c9a0; border-color:#36c9a0; }
 
+  /* 我的：3D 小Y + 战绩 */
+  .me-wrap { max-width:520px; margin:0 auto; padding:22px 16px 48px; display:grid; gap:14px; }
+  .me-stage { position:relative; width:100%; aspect-ratio:4 / 5; max-height:62vh; margin:0 auto; border-radius:24px; overflow:hidden;
+    background:radial-gradient(70% 55% at 50% 45%, var(--surface), var(--surface-2)); border:1.5px solid var(--rule); }
+  .me-stage canvas { position:absolute; inset:0; width:100% !important; height:100% !important; touch-action:none; cursor:grab; }
+  .me-stage canvas:active { cursor:grabbing; }
+  .me-say { position:absolute; left:14px; top:14px; z-index:2; max-width:70%; padding:7px 12px; border-radius:14px 14px 14px 4px; background:var(--surface);
+    border:1.5px solid var(--rule); box-shadow:var(--shadow); color:var(--ink-1); font-size:13px; line-height:1.45; pointer-events:none; }
+  .me-say.show { animation:sayIn .3s cubic-bezier(.3,.7,.3,1.4); }
+  .me-hint { position:absolute; left:0; right:0; bottom:10px; z-index:2; text-align:center; font-size:11.5px; color:var(--ink-3); pointer-events:none; }
+  .me-fallback { position:absolute; inset:12% 18% 14%; display:grid; place-items:center; }
+  .me-fallback[hidden] { display:none; }
+  .me-fallback svg { width:100%; height:100%; }
+  .me-id { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; font-size:12px; color:var(--ink-2); }
+  .me-id b { font-size:16px; color:var(--ink-1); white-space:nowrap; }
+  .me-stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+  .me-stats div { padding:12px 8px 10px; border-radius:16px; background:var(--surface); border:1.5px solid var(--rule); text-align:center; }
+  .me-stats b { display:block; font-family:"Jost", var(--font-ui); font-size:24px; font-weight:700; line-height:1.1; color:var(--ink-1); font-variant-numeric:tabular-nums; }
+  .me-stats small { font-size:11.5px; color:var(--ink-3); }
+  .me-emo { padding:10px 14px 12px; border-radius:16px; background:var(--surface); border:1.5px solid var(--rule); }
+  .me-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .me-chips button { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:99px; border:1.5px solid var(--rule); background:var(--surface-2);
+    color:var(--ink-1); font:inherit; font-size:13px; cursor:pointer; }
+  .me-chips button[aria-pressed="true"] { border-color:var(--ink-1); }
+  .me-chips i { width:12px; height:12px; border-radius:50%; display:inline-block; }
+  #meBadgeWall { justify-self:center; }
+
   /* 滑动打勾 */
   .t-item { touch-action:pan-y; transition:transform .25s cubic-bezier(.3,.7,.3,1), background .2s, border-color .2s; position:relative; }
   .t-item.sw-right { background:#d9f7ea !important; border-color:#36c9a0 !important; }
@@ -910,6 +938,9 @@
       </a>
       <a href="#archive" data-view="archive">
         <svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="2.6"/><path d="M4 6v12c0 1.4 3.6 2.6 8 2.6s8-1.2 8-2.6V6"/><path d="M4 12c0 1.4 3.6 2.6 8 2.6s8-1.2 8-2.6"/></svg>全部清单
+      </a>
+      <a href="#me" data-view="me">
+        <svg viewBox="0 0 24 24"><rect x="6" y="5" width="12" height="15" rx="4"/><path d="M9.5 10.5v2M14.5 10.5v2M10.5 16h3M14 5c0-1.6.9-2.5 2.4-2.6"/></svg>我的
       </a>
     </nav>
     <button class="btn install-top" id="btnInstallTop" hidden>
@@ -1132,6 +1163,35 @@
       <div class="drum-viewport" id="drumViewport"></div>
       <div class="arc-empty" id="arcEmpty" hidden>
         还没有保存过清单。<br>去「今日」勾选或修改一项，这一天就会出现在这里。
+      </div>
+    </section>
+
+    <!-- ═══════════ 我的：3D 小Y + 战绩 ═══════════ -->
+    <section class="view" id="viewMe">
+      <div class="me-wrap">
+        <div class="me-stage" id="meStage">
+          <div class="me-say" id="meSay">嗨，我是小Y～</div>
+          <div class="me-fallback" id="meFallback" hidden></div>
+          <small class="me-hint">拖动转一圈 · 点它会跳</small>
+        </div>
+        <div class="me-id">
+          <b id="meTitle">Lv.1</b>
+          <div class="hud-bar"><i id="meLv"></i></div>
+          <small id="meLvText"></small>
+        </div>
+        <div class="me-stats">
+          <div><b id="meStreak">0</b><small>天连胜</small></div>
+          <div><b id="meStars">0</b><small>星星</small></div>
+          <div><b id="meChecks">0</b><small>累计完成</small></div>
+          <div><b id="meDays">0</b><small>打卡天数</small></div>
+          <div><b id="meBadgeN">0</b><small>徽章</small></div>
+          <div><b id="meFreeze">0</b><small>补签卡</small></div>
+        </div>
+        <div class="me-emo">
+          <div class="q-head"><span>小Y 的眼睛颜色</span><small>颜色就是心情</small></div>
+          <div class="me-chips" id="meEmo"></div>
+        </div>
+        <button class="btn" id="meBadgeWall">查看徽章墙</button>
       </div>
     </section>
   </main>
@@ -2462,12 +2522,13 @@
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   function defaultView() { return standalone || window.innerWidth <= 760 ? "today" : "studio"; }
   function showView() {
-    const v = ["today", "studio", "archive"].includes(location.hash.slice(1)) ? location.hash.slice(1) : defaultView();
+    const v = ["today", "studio", "archive", "me"].includes(location.hash.slice(1)) ? location.hash.slice(1) : defaultView();
     document.body.dataset.view = v;
     document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("active", a.dataset.view === v));
     if (v === "studio") { render(); fit(); }
     if (v === "today") renderToday();
     if (v === "archive") { buildDrum(); if (window.GAME) GAME.quest("archive"); } else stopSpin();
+    if (window.GAME) { if (v === "me") GAME.me(); else GAME.meStop(); }
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", showView);
@@ -3267,7 +3328,63 @@
   $("#sealLater").addEventListener("click", () => { G.snoozeAt = Date.now(); gsave(); sealCard(); });
   /* 让浏览器尽量别清掉本站数据（Chrome / 安卓有效；iPhone 装到主屏后更稳） */
   try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
-  window.GAME = { onMark, quest, badge, hud, swipeable, isOwned, askUnlock, decorateSwatches, exported, sealed, restore, rollback, sealCard, state: () => JSON.parse(JSON.stringify(G)) };
+  /* ── 我的：3D 小Y + 战绩。3D 引擎只在第一次打开「我的」时才加载，打不开就退回平面小Y ── */
+  const EYES = [["auto", "跟着今天走", ""], ["wild", "默认", "#E8434F"], ["joy", "兴奋", "#FFC61A"], ["calm", "放松", "#4FA3FF"], ["sad", "难过", "#8A9BC4"],
+    ["think", "思考", "#A98BEA"], ["cold", "冷", "#9FE3FF"], ["hot", "热", "#FF7A1A"], ["proud", "得意", "#FF5FA2"], ["nervous", "慌张", "#4FD69C"]];
+  const MOOD_EYE = { sleep: "#4FA3FF", ok: "#E8434F", first: "#E8434F", party: "#FFC61A", worry: "#4FD69C", cross: "#8A9BC4" };
+  const EYE_KEY = "dailyplan.yyEye";
+  let eyePick = (() => { try { return localStorage.getItem(EYE_KEY) || "auto"; } catch (e) { return "auto"; } })();
+  let yy3d = null, yyLoading = null;
+  const eyeHex = () => (eyePick === "auto" ? MOOD_EYE[mood()] : (EYES.find((e) => e[0] === eyePick) || EYES[1])[2]);
+  const loadScript = (src) => new Promise((ok, no) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+  function yyLoad() {
+    if (yyLoading) return yyLoading;
+    const base = new URL("assets/three/", document.querySelector('script[src$="html-to-image.js"]').src).href;
+    yyLoading = (window.THREE ? Promise.resolve() : loadScript(base + "three.min.js"))
+      .then(() => Promise.all(["OrbitControls.js", "BufferGeometryUtils.js", "xiaoy3d.js"].map((f) => loadScript(base + f))))
+      .then(() => {
+        yy3d = mountXiaoY3D($("#meStage"));
+        $("#meStage").addEventListener("yytap", () => { buzz(10); meSay("tap"); });
+      })
+      .catch(() => {
+        $("#meFallback").innerHTML = $("#buddy svg").outerHTML;
+        $("#meFallback").hidden = false;
+        $(".me-hint").textContent = "这台设备显示不了 3D，先看看平面的小Y";
+      });
+    return yyLoading;
+  }
+  function meSay(kind) {
+    const list = LINES[kind] || LINES.sleep, b = $("#meSay");
+    b.textContent = list[(Math.random() * list.length) | 0];
+    b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+  }
+  function me() {
+    const s = streakInfo(), L2 = levelInfo();
+    $("#meTitle").textContent = `Lv.${L2.lv} ${L2.title}`;
+    $("#meLv").style.width = Math.min(100, (G.earned - L2.lo) / (L2.hi - L2.lo) * 100) + "%";
+    $("#meLvText").textContent = `${G.earned - L2.lo}/${L2.hi - L2.lo}`;
+    $("#meStreak").textContent = s.streak;
+    $("#meStars").textContent = G.stars;
+    $("#meChecks").textContent = G.checks;
+    $("#meDays").textContent = Object.keys(days).filter((k) => checksOf(k) > 0).length;
+    $("#meBadgeN").textContent = Object.keys(G.badges).length;
+    $("#meFreeze").textContent = G.freezes;
+    $("#meEmo").innerHTML = EYES.map((e) => `<button type="button" data-eye="${e[0]}" aria-pressed="${e[0] === eyePick}">${e[2] ? `<i style="background:${e[2]}"></i>` : ""}${e[1]}</button>`).join("");
+    meSay(mood());
+    yyLoad().then(() => { if (yy3d) { yy3d.setEye(eyeHex()); yy3d.start(); } });
+  }
+  function meStop() { if (yy3d) yy3d.stop(); }
+  $("#meEmo").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    eyePick = b.dataset.eye;
+    try { localStorage.setItem(EYE_KEY, eyePick); } catch (x) {}
+    $("#meEmo").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    if (yy3d) { yy3d.setEye(eyeHex()); yy3d.hop(); }
+  });
+  $("#meBadgeWall").addEventListener("click", () => $("#hudBadges").click());
+
+  window.GAME = { onMark, quest, badge, hud, swipeable, isOwned, askUnlock, decorateSwatches, exported, sealed, restore, rollback, sealCard, me, meStop, state: () => JSON.parse(JSON.stringify(G)) };
+  if (document.body.dataset.view === "me") me();
   autoFreeze(); decorateSwatches(); questsToday(); hud(); sealCard();
   setTimeout(() => say(mood()), 1200);
 
