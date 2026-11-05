@@ -11,10 +11,17 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 14   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 15   # 改了代码就加 1，手机上装好的版本会自动换新
 SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
+# 主题包：src/themes/<主题>.js，每个主题的 7 套版式各写在自己的文件里，插在 renderLayout 前面
+# 只想带某几个包时：THEME_PACKS=lwf,y2k python build.py --preview D
+_only = [x for x in os.environ.get("THEME_PACKS", "").split(",") if x]
+_packs = sorted(f for f in os.listdir(os.path.join(ROOT, "src", "themes")) if f.endswith(".js") and (not _only or f[:-3] in _only))
+TPL = TPL.replace("  function renderLayout() {", "".join(
+    f"  /* ── 主题包 {f} ── */\n" + open(os.path.join(ROOT, "src", "themes", f), encoding="utf-8").read().rstrip() + "\n\n"
+    for f in _packs) + "  function renderLayout() {", 1)
 STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")
 SHOP = [p for p in PRODUCTS if p["slug"] != "studio"]
 ALL = ["forest", "ocean", "morandi", "paper", "night", "lwf", "y2k", "bauhaus", "songyuan", "business", "autumn", "comic", "guai"]
@@ -84,9 +91,9 @@ self.addEventListener("fetch", (e) => {{
       .catch(() => caches.match("./index.html")));
     return;
   }}
-  /* 字体分片用到一片存一片，下次断网也能显示 */
+  /* 字体分片、主题图片用到一个存一个，下次断网也能显示 */
   e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request).then((r) => {{
-    if (r.ok && e.request.url.includes("/fonts/files/")) {{ const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); }}
+    if (r.ok && /\/(fonts\/files|assets)\//.test(e.request.url)) {{ const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); }}
     return r;
   }})));
 }});
@@ -139,7 +146,7 @@ def build(out, preview=False):
     if out != ROOT:
         for f in ("html-to-image.js", "icon-192.png", "icon-512.png", "apple-touch-icon.png"):
             shutil.copy(os.path.join(ROOT, f), os.path.join(out, f))
-        for d in ("fonts", "previews"):
+        for d in ("fonts", "previews", "assets"):
             shutil.copytree(os.path.join(ROOT, d), os.path.join(out, d), dirs_exist_ok=True)
     print("built →", out)
 

@@ -1278,7 +1278,7 @@
   ];
   const CLASSIC = ["forest", "ocean", "morandi", "paper", "night"];
   const DESIGNED = ["lwf", "y2k", "bauhaus", "songyuan", "business", "autumn", "comic", "guai"];
-  const CLASSIC_NAMES = ["森林", "海洋", "莫兰迪", "宣纸", "夜墨"];
+  const CLASSIC_NAMES = ["植物标本", "航海日志", "静物", "稿纸", "夜观星象"];
   const ALL_THEMES = [...CLASSIC, ...DESIGNED];
   /* 每款产品只带自己的主题：build.py 会在 <head> 里写入 window.PRODUCT。
      没有写入时（总控台 / 直接打开模板）= 全部主题，要用主理人的码解锁。 */
@@ -3392,6 +3392,7 @@
   const TOUR_KEY = "dailyplan.tour." + PRODUCT.slug;
   function showTour() {
     try { if (localStorage.getItem(TOUR_KEY) === "1") return; } catch (e) {}
+    if (new URLSearchParams(location.search).has("solo")) return;   // 截图模式不弹引导
     const d = $("#tourDialog");
     d.showModal ? d.showModal() : d.setAttribute("open", "");
   }

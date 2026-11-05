@@ -1,5 +1,5 @@
 /* 每日计划 · 离线缓存（build.py 生成） */
-const CACHE = "daily-plan-studio-v13";
+const CACHE = "daily-plan-studio-v15";
 const ASSETS = ["./", "./index.html", "./manifest.json", "../html-to-image.js", "../fonts/fonts.css", "../icon-192.png", "../icon-512.png"];
 self.addEventListener("install", (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys()
@@ -12,9 +12,9 @@ self.addEventListener("fetch", (e) => {
       .catch(() => caches.match("./index.html")));
     return;
   }
-  /* 字体分片用到一片存一片，下次断网也能显示 */
+  /* 字体分片、主题图片用到一个存一个，下次断网也能显示 */
   e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request).then((r) => {
-    if (r.ok && e.request.url.includes("/fonts/files/")) { const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); }
+    if (r.ok && /\/(fonts\/files|assets)\//.test(e.request.url)) { const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); }
     return r;
   })));
 });
