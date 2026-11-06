@@ -1,0 +1,9 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>每日计划 · 鬼怪</title>
+<meta http-equiv="refresh" content="0;url=../../?theme=guai#today">
+<script>
+  /* 以前装过的单款离线缓存先注销，再跳到总版 */
+  if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => { if (r.scope.includes("/p/")) r.unregister(); }));
+  location.replace("../../?theme=guai#today");
+</script></head><body><p>正在前往 <a href="../../?theme=guai#today">每日计划 · Y世界</a>…</p></body></html>
