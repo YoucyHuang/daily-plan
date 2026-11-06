@@ -5639,7 +5639,10 @@
   const TOUR_KEY = "dailyplan.tour." + PRODUCT.slug;
   function showTour() {
     try { if (localStorage.getItem(TOUR_KEY) === "1") return; } catch (e) {}
-    if (new URLSearchParams(location.search).has("solo")) return;   // 截图模式不弹引导
+    const tq = new URLSearchParams(location.search);
+    if (tq.has("solo")) return;   // 截图模式不弹引导
+    /* 买家从发货链接进来、要先兑换密钥：这次只弹解锁框，引导留到下次打开 */
+    if (THEMES.includes(tq.get("theme")) && window.GAME && !GAME.isOwned(tq.get("theme"))) return;
     const d = $("#tourDialog");
     d.showModal ? d.showModal() : d.setAttribute("open", "");
   }
