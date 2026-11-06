@@ -27,7 +27,7 @@
   每日计划  （可自己调整）
 
   【三个页面】（顶部 / 手机底部切换）
-  · 今日：手机全屏清单，点圆圈 完成 → 没做成 → 清空。装到主屏后默认打开这一页。
+  · 今日：手机全屏清单，点圆圈 完成 → 半对 → 没做成 → 清空。装到主屏后默认打开这一页。
   · 制卡：生成小红书 3:4 首页 / 尾页卡片，导出 1080×1440 PNG。
   · 全部清单：所有记录过的每日清单，按月围成卷筒顺时针旋转；拖动可转，点卡片看详情。
 
@@ -317,12 +317,15 @@
   .t-check svg { width:20px; height:20px; display:none; fill:none; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
   .t-check[data-state="check"] { background:var(--sage); border-color:var(--sage); }
   .t-check[data-state="check"] .mark-check { display:block; stroke:#fff; }
+  .t-check[data-state="half"] { background:var(--sage-soft); border-color:var(--sage); }
+  .t-check[data-state="half"] .mark-half { display:block; stroke:var(--sage); }
   .t-check[data-state="cross"] { background:var(--clay-soft); border-color:var(--clay); }
   .t-check[data-state="cross"] .mark-cross { display:block; stroke:var(--clay); }
   .t-text { flex:1; min-width:0; font-size:17px; line-height:1.45; outline:none; word-break:break-word; padding:4px 0; }
   .t-item.is-check { background:var(--sage-soft); border-color:transparent; }
   .t-item.is-check .t-text { color:var(--ink-2); text-decoration:line-through; text-decoration-color:var(--sage); }
   .t-item.is-cross .t-text { color:var(--ink-2); }
+  .t-item.is-half { background:var(--sage-soft); border-color:transparent; }
   .t-del {
     width:32px; height:32px; flex:none; border:0; border-radius:8px;
     background:transparent; color:var(--ink-3); font-size:20px; line-height:1; cursor:pointer;
@@ -332,6 +335,8 @@
   .t-add .field { min-height:46px; font-size:16px; background:var(--surface); }
   .t-add .btn { min-height:46px; padding:0 18px; white-space:nowrap; flex:none; }
   .t-hint { font-size:12px; color:var(--ink-3); margin-top:10px; line-height:1.6; }
+  .t-hint-top { margin:14px 2px 8px; }
+  .hint-ic { display:inline-block; width:1.25em; height:1.25em; vertical-align:-.28em; margin:0 1px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
   .t-foot { margin-top:auto; padding-top:24px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   /* 添加到主屏幕 */
   .btn[hidden] { display:none; }
@@ -505,6 +510,7 @@
   .checkbox svg path { fill:none; stroke:var(--ink); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
   .checkbox[data-state="check"] .mark-check { display:block; }
   .checkbox[data-state="cross"] .mark-cross { display:block; }
+  .checkbox[data-state="half"] .mark-half { display:block; }
   .page.front .checkbox { cursor:default; }
   .page.front .checkbox svg { display:none !important; }
 
@@ -919,7 +925,7 @@
     :root .today-wrap .today-head h1, :root[data-skin] .today-wrap .today-head h1 { font-size:24px; margin:0 0 10px; }
     .today-wrap .today-date { font-size:13px; }
     .hud-pill { padding:4px 8px 4px 6px; } .hud-pill b { font-size:15px; }
-    .t-hint { display:none; }
+    .t-hint:not(.t-hint-top) { display:none; }
   }
   @media (prefers-reduced-motion: reduce) { .buddy svg, .lv-burst, .lv-burst b { animation:none !important; } }
 
@@ -1026,18 +1032,19 @@
 
         <ul class="t-list" id="tList"></ul>
 
+        <p class="t-hint t-hint-top">做完啦点击一下是对号<svg class="hint-ic" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6"/></svg>，点击两下是做啦但没做完<svg class="hint-ic" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6 M11.4 8.6 L17.8 14.2"/></svg>，点击三下是今日未开启这件事<svg class="hint-ic" viewBox="0 0 24 24"><path d="M7 7 L17 17 M17 7 L7 17"/></svg>。</p>
         <form class="t-add" id="tAdd">
           <input class="field" id="tAddInput" placeholder="添加一件小事…" maxlength="40" autocomplete="off">
           <button class="btn primary" type="submit">添加</button>
         </form>
-        <p class="t-hint">点圆圈：完成 → 没做成 → 清空。点文字可以直接改。<br>清单自动保存在这台设备上。</p>
+        <p class="t-hint">再点一下回到空白。点文字可以直接改。<br>清单自动保存在这台设备上。</p>
 
         <div class="t-foot">
-          <button class="btn" id="tToFront">生成首页卡片</button>
-          <button class="btn" id="tToBack">生成尾页卡片</button>
-          <a class="btn primary t-archive" href="#archive">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="2.6"/><path d="M4 6v12c0 1.4 3.6 2.6 8 2.6s8-1.2 8-2.6V6"/><path d="M4 12c0 1.4 3.6 2.6 8 2.6s8-1.2 8-2.6"/></svg>
-            查看我的全部清单 · <span id="tArcCount">0</span> 天
+          <button class="btn" id="tClearAll">全部清空</button>
+          <button class="btn" id="tResetMarks">重置</button>
+          <a class="btn primary t-archive" href="#studio">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
+            制作独家卡片
           </a>
         </div>
       </div>
@@ -1106,7 +1113,7 @@
             <button class="btn" id="btnAdd">＋ 添加一项</button>
             <button class="btn ghost" id="btnReset">恢复示例</button>
           </div>
-          <p class="chip" style="margin-top:8px">点卡片上的文字可编辑；尾页点方框切换 ✓ / ✗</p>
+          <p class="chip" style="margin-top:8px">点卡片上的文字可编辑；尾页点方框切换 ✓ / 半对 / ✗</p>
         </div>
 
         <div class="group">
@@ -1232,7 +1239,7 @@
   <dialog class="day-dialog tour" id="tourDialog">
     <h3>欢迎来到 Y世界 ✦</h3>
     <ol class="tour-steps">
-      <li><b>今日</b>写下今天要做的事，做完点圆圈打 ✓，没做成再点一下变 ✗。</li>
+      <li><b>今日</b>写下今天要做的事，做完啦点一下是对号<svg class="hint-ic" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6"/></svg>，点两下是做啦但没做完<svg class="hint-ic" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6 M11.4 8.6 L17.8 14.2"/></svg>，点三下是今日未开启这件事<svg class="hint-ic" viewBox="0 0 24 24"><path d="M7 7 L17 17 M17 7 L7 17"/></svg>。</li>
       <li><b>制卡</b>一键生成 1080×1440 的小红书卡片：首页（早上发）和尾页（晚上打完勾发），还能换配色、放自己的照片。</li>
       <li><b>像游戏一样</b>每完成一件得星星，每天打卡攒连胜，完成每日任务、收集徽章；星星可以解锁新主题。</li>
       <li><b>全部清单</b>每一天都会围成一个卷筒慢慢转，点开就能回看。数据只存在你自己的手机里。</li>
@@ -1464,7 +1471,9 @@
   /* ───────────────── 卡片清单渲染 ───────────────── */
   const CHECK_SVG  = '<svg class="mark-check" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6"/></svg>';
   const CROSS_SVG  = '<svg class="mark-cross" viewBox="0 0 24 24"><path d="M7 7 L17 17 M17 7 L7 17"/></svg>';
-  const MARK_ORDER = ["empty", "check", "cross"];
+  /* 半对：老师批改的那种，对号的长笔画上再加一小撇 */
+  const HALF_SVG   = '<svg class="mark-half" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6 M11.4 8.6 L17.8 14.2"/></svg>';
+  const MARK_ORDER = ["empty", "check", "half", "cross"];
 
   function render() {
     if (isDesigned()) { renderLayout(); return; }
@@ -1476,7 +1485,7 @@
       const box = document.createElement("span");
       box.className = "checkbox";
       box.dataset.state = state;
-      box.innerHTML = CHECK_SVG + CROSS_SVG;
+      box.innerHTML = CHECK_SVG + HALF_SVG + CROSS_SVG;
       box.addEventListener("click", () => { if (!frontMode) cycleMark(it.id); });
 
       const task = document.createElement("span");
@@ -1491,7 +1500,7 @@
     });
   }
 
-  /* 空白 → ✓ → ✗ → 空白 */
+  /* 空白 → ✓ 做完 → 半对 做了没做完 → ✗ 没做 → 空白 */
   function cycleMark(id, el) {
     const it = items.find((x) => x.id === id);
     setMark(id, MARK_ORDER[(MARK_ORDER.indexOf(it.mark) + 1) % MARK_ORDER.length], el);
@@ -1525,13 +1534,13 @@
     tList.innerHTML = "";
     items.forEach((it) => {
       const li = document.createElement("li");
-      li.className = "t-item" + (it.mark === "check" ? " is-check" : it.mark === "cross" ? " is-cross" : "");
+      li.className = "t-item" + (it.mark === "check" ? " is-check" : it.mark === "half" ? " is-half" : it.mark === "cross" ? " is-cross" : "");
 
       const box = document.createElement("button");
       box.className = "t-check";
       box.dataset.state = it.mark;
       box.setAttribute("aria-label", "切换完成状态");
-      box.innerHTML = CHECK_SVG + CROSS_SVG;
+      box.innerHTML = CHECK_SVG + HALF_SVG + CROSS_SVG;
       box.addEventListener("click", () => cycleMark(it.id, box));
 
       const text = document.createElement("span");
@@ -1560,7 +1569,6 @@
     const total = items.length;
     const done = items.filter((x) => x.mark === "check").length;
     $("#tCount").textContent = `${done}/${total}`;
-    $("#tArcCount").textContent = Object.keys(days).length;
     $("#tBar").style.width = total ? (done / total * 100) + "%" : "0";
     if (window.GAME) GAME.hud();
     $("#tMsg").textContent = total && done === total ? "今天的都完成了，好好休息 ✓"
@@ -1576,8 +1584,26 @@
     renderAll();
     if (window.GAME) GAME.quest("add");
   });
-  $("#tToFront").addEventListener("click", () => { setMode(true); location.hash = "#studio"; });
-  $("#tToBack").addEventListener("click", () => { setMode(false); location.hash = "#studio"; });
+  /* 全部清空：删掉今天所有事项；重置：日期回到今天，事项留着、勾和叉清掉（像刚打开一样） */
+  $("#tClearAll").addEventListener("click", () => {
+    if (!items.length || !confirm("把今天的事项全部删掉？")) return;
+    items = [];
+    saveDay();
+    renderAll();
+  });
+  $("#tResetMarks").addEventListener("click", () => {
+    if (!confirm("重置：日期回到今天，勾和叉都清掉，从头开始？")) return;
+    $("#dateInput").value = todayStr();
+    syncDateText();
+    const k = currentKey();
+    if (!loadDay(k)) {
+      const recent = sortedKeys()[0];
+      setItems(recent ? days[recent].items : DEFAULT_ITEMS);
+    }
+    items.forEach((x) => { x.mark = "empty"; });
+    if (days[k]) saveDay();
+    renderAll();
+  });
 
   function renderAll() { render(); renderToday(); }
 
@@ -1609,6 +1635,8 @@
     return { P, HP, ROT, ck, deco, wave, burst, shape, cnDay, cnMon };
   })();
 
+  /* 卡片上的半对：在主题自己画的对号上叠一小撇（颜色跟着卡片文字色） */
+  const HALF_SLASH = '<svg viewBox="0 0 24 24" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><path d="M11 7.8 L18.6 14.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
   function lctx() {
     const label = $("#dateInput").value.trim();
     const k = keyFrom(label);
@@ -1621,12 +1649,14 @@
     }
     c.n = items.length;
     c.done = items.filter((x) => x.mark === "check").length;
-    c.state = (it) => frontMode ? "" : it.mark === "check" ? "c" : it.mark === "cross" ? "x" : "";
+    c.state = (it) => frontMode ? "" : it.mark === "check" || it.mark === "half" ? "c" : it.mark === "cross" ? "x" : "";
     /* 行高：可用高度 / 项数，不超过设计值；字号跟着按比例缩 */
     c.fit = (avail, base, font) => { const h = Math.min(base, Math.floor(avail / Math.max(c.n, 1))); return { h, f: Math.max(22, Math.round(font * Math.min(1, h / base))) }; };
     c.rows = (fn) => items.map((it, i) => fn(it, c.state(it), i)).join("");
     c.t = (it, style = "") => `<span class="lc-t" data-tid="${it.id}" contenteditable="true" spellcheck="false" style="${style}">${esc(it.text)}</span>`;
-    c.b = (it, html) => `<span data-mid="${it.id}" style="display:inline-flex;flex:0 0 auto">${html}</span>`;
+    c.b = (it, html) => !frontMode && it.mark === "half"
+      ? `<span data-mid="${it.id}" style="display:inline-flex;flex:0 0 auto;position:relative">${html}${HALF_SLASH}</span>`
+      : `<span data-mid="${it.id}" style="display:inline-flex;flex:0 0 auto">${html}</span>`;
     /* 用户自己的背景照片：叠在主题底色之上、文字之下，透明度跟着滑块 */
     c.photo = hasPhoto ? `<div class="abs" style="inset:0;background:var(--lc-photo) center/cover no-repeat;opacity:var(--photo-opacity)"></div>` : "";
     return c;
@@ -4545,7 +4575,7 @@
     const done = its.filter((x) => x.mark === "check").length;
     const theme = THEMES.includes(d.theme) ? d.theme : DEFAULT_THEME;
     const lis = its.slice(0, 7).map((x) =>
-      `<li><span class="mb">${x.mark === "check" ? "✓" : x.mark === "cross" ? "✗" : ""}</span><span>${esc(x.text)}</span></li>`
+      `<li><span class="mb">${x.mark === "check" ? "✓" : x.mark === "half" ? "½" : x.mark === "cross" ? "✗" : ""}</span><span>${esc(x.text)}</span></li>`
     ).join("");
     return `<div class="mini" data-theme="${theme}" data-key="${k}">
       <div class="mini-frame"></div>
@@ -5326,7 +5356,8 @@
         a.clear = true; gsave();
         setTimeout(() => { award(30, el); confetti(); buzz([30, 60, 30]); say("party"); toast(ICON.fire, "今天全部清空！", "+30 星 · 太漂亮了"); }, 350);
       } else say(c === 1 ? "first" : "ok");
-    } else if (it.mark === "cross") { say("cross"); buzz(8); }
+    } else if (it.mark === "half") { say("half"); buzz(12); }
+    else if (it.mark === "cross") { say("cross"); buzz(8); }
     gsave(); quest(); badge();
   }
 
@@ -5336,6 +5367,7 @@
     first: ["第一件！好的开始 ✦", "动起来啦！", "这一下很关键哦"],
     ok: ["又一件！", "节奏不错～", "再来一件，我就跳个舞", "你今天好稳"],
     party: ["全部清空！今天的你闪闪发光 ✦", "完美的一天！", "我要转圈圈了！"],
+    half: ["做了一半也是做了 ✦", "开了头就很棒", "剩下的明天接着来"],
     cross: ["没做成也没关系，诚实最酷", "明天再试，我等你", "记下来就是进步"],
     worry: ["连胜还差今天这一下……", "别让火苗熄灭呀", "做一件小事就够了"],
     tap: ["戳我干嘛～", "嘿嘿", "今天想做点什么？", "我是小Y，Y世界的向导", "多喝水！"],
@@ -5354,7 +5386,7 @@
     b.textContent = list[(Math.random() * list.length) | 0];
     b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
     const y = $("#buddy"); y.classList.remove("hop"); void y.offsetWidth; y.classList.add("hop");
-    y.dataset.mood = kind === "tap" || kind === "first" ? mood() : kind === "cross" ? "worry" : kind;
+    y.dataset.mood = kind === "tap" || kind === "first" ? mood() : kind === "cross" ? "worry" : kind === "half" ? "ok" : kind;
   }
   $("#buddy").addEventListener("click", () => { buzz(10); say("tap"); });
 
