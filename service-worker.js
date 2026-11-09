@@ -1,5 +1,5 @@
 /* 每日计划 · 离线缓存（build.py 生成） */
-const CACHE = "daily-plan-app-v18";
+const CACHE = "daily-plan-app-v19";
 const ASSETS = ["./", "./index.html", "./manifest.json", "html-to-image.js", "fonts/fonts.css", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys()
@@ -8,7 +8,8 @@ self.addEventListener("activate", (e) => e.waitUntil(caches.keys()
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== self.location.origin) return;
   if (e.request.mode === "navigate") {
-    e.respondWith(fetch(e.request).then((r) => { const c = r.clone(); caches.open(CACHE).then((x) => x.put("./index.html", c)); return r; })
+    /* no-cache：每次都向服务器确认有没有新版，不吃浏览器 10 分钟的 HTTP 缓存 */
+    e.respondWith(fetch(e.request, { cache: "no-cache" }).then((r) => { const c = r.clone(); caches.open(CACHE).then((x) => x.put("./index.html", c)); return r; })
       .catch(() => caches.match("./index.html")));
     return;
   }

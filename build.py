@@ -11,7 +11,7 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 18   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 19   # 改了代码就加 1，手机上装好的版本会自动换新
 SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
@@ -87,7 +87,8 @@ self.addEventListener("activate", (e) => e.waitUntil(caches.keys()
 self.addEventListener("fetch", (e) => {{
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== self.location.origin) return;
   if (e.request.mode === "navigate") {{
-    e.respondWith(fetch(e.request).then((r) => {{ const c = r.clone(); caches.open(CACHE).then((x) => x.put("./index.html", c)); return r; }})
+    /* no-cache：每次都向服务器确认有没有新版，不吃浏览器 10 分钟的 HTTP 缓存 */
+    e.respondWith(fetch(e.request, {{ cache: "no-cache" }}).then((r) => {{ const c = r.clone(); caches.open(CACHE).then((x) => x.put("./index.html", c)); return r; }})
       .catch(() => caches.match("./index.html")));
     return;
   }}

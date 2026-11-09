@@ -439,7 +439,13 @@
   .range-row span { min-width:3em; text-align:right; }
   .export-tip { display:block; margin-top:8px; text-align:center; }
 
-  .stage-wrap { display:flex; justify-content:center; min-width:0; }
+  .stage-wrap { display:flex; justify-content:center; min-width:0; position:relative; }
+  .export-corner { position:absolute; right:0; top:0; z-index:3; display:flex; flex-direction:column; align-items:flex-end; gap:4px; max-width:60%; }
+  .export-corner .btn { min-height:32px; padding:5px 11px; font-size:13px; border-radius:99px; background:var(--paper-glass); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+  .export-corner .chip:empty { display:none; }
+  .export-corner .chip { padding:3px 8px; border-radius:8px; background:var(--surface); text-align:right; }
+  .mini.fresh { animation:freshIn 1.6s ease-out 2; }
+  @keyframes freshIn { 0%,100% { box-shadow:0 0 0 0 rgba(255,198,26,0); } 40% { box-shadow:0 0 0 8px rgba(255,198,26,.85); } }
   /* 预览舞台：把 1080×1440 的页面按比例缩放显示 */
   .preview { overflow:hidden; border-radius:12px; box-shadow:var(--shadow-lg); }
   .stage { width:1080px; height:1440px; transform-origin:top left; }
@@ -1028,10 +1034,6 @@
           <button class="btn primary" id="sealGo">一键封存</button>
           <button class="install-x" id="sealLater" aria-label="过几天再提醒">×</button>
         </div>
-        <div class="quests">
-          <div class="q-head"><span>今日任务</span><small id="questN">0/3</small></div>
-          <ul id="questList"></ul>
-        </div>
         <div class="today-head">
           <div class="today-date" id="tDate"></div>
           <h1>今天要做的事</h1>
@@ -1095,14 +1097,6 @@
         </div>
 
         <div class="group">
-          <div class="g-label">页面</div>
-          <div class="seg">
-            <button id="btnFront" class="active">首页 · 全部未勾</button>
-            <button id="btnBack">尾页 · 勾 / 叉</button>
-          </div>
-        </div>
-
-        <div class="group">
           <div class="g-label">日期</div>
           <input class="field" type="text" id="dateInput" value="" placeholder="2026.08.18 周二">
         </div>
@@ -1123,7 +1117,7 @@
             <button class="btn" id="btnAdd">＋ 添加一项</button>
             <button class="btn ghost" id="btnReset">恢复示例</button>
           </div>
-          <p class="chip" style="margin-top:8px">点卡片上的文字可编辑；尾页点方框切换 ✓ / 半对 / ✗</p>
+          <p class="chip" style="margin-top:8px">点卡片上的文字可编辑；点方框切换 ✓ / 半对 / ✗</p>
         </div>
 
         <div class="group">
@@ -1134,15 +1128,24 @@
           </div>
         </div>
 
-        <button class="btn primary big" id="btnExport">导出图片 · 1080×1440</button>
-        <span class="chip export-tip" id="exportTip"></span>
+        <button class="btn primary big" id="btnTower">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="2.6"/><path d="M4 6v12c0 1.4 3.6 2.6 8 2.6s8-1.2 8-2.6V6"/><path d="M12 16.5V10M9.2 12.6 12 9.8l2.8 2.8"/></svg>
+          上传至人生通天塔
+        </button>
+        <span class="chip export-tip" id="towerTip">放进「全部清单」的旋转滚筒，以后随时转回来看</span>
       </aside>
 
       <!-- 页面（导出 / 截图这一块） -->
       <div class="stage-wrap" id="stageWrap">
+        <div class="export-corner">
+          <button class="btn" id="btnExport" title="导出 1080×1440 图片">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>导出图片
+          </button>
+          <span class="chip" id="exportTip"></span>
+        </div>
         <div class="preview" id="preview">
           <div class="stage" id="stage">
-            <div class="page front" id="page">
+            <div class="page" id="page">
               <div class="base"></div>
               <div class="photo" id="photo"></div>
               <div class="tint"></div>
@@ -1260,7 +1263,7 @@
     <ol class="tour-steps">
       <li><b>今日</b>写下今天要做的事，做完啦点一下是对号<svg class="hint-ic" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6"/></svg>，点两下是做啦但没做完<svg class="hint-ic" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6 M11.4 8.6 L17.8 14.2"/></svg>，点三下是今日未开启这件事<svg class="hint-ic" viewBox="0 0 24 24"><path d="M7 7 L17 17 M17 7 L7 17"/></svg>。</li>
       <li><b>制作卡片</b>清单下面往下滑，一键生成 1080×1440 的小红书卡片：首页（早上发）和尾页（晚上打完勾发），还能换配色、放自己的照片。</li>
-      <li><b>像游戏一样</b>每完成一件得星星，每天打卡攒连胜，完成每日任务、收集徽章；星星可以解锁新主题。</li>
+      <li><b>像游戏一样</b>每完成一件得星星，每天打卡攒连胜、收集徽章；星星可以解锁新主题。</li>
       <li><b>全部清单</b>每一天都会围成一个卷筒慢慢转，点开就能回看。数据只存在你自己的手机里。</li>
     </ol>
     <div class="dialog-actions"><button class="btn primary" id="tourGo">开始今天</button></div>
@@ -1323,7 +1326,7 @@
   if (PRODUCT.samples && PRODUCT.samples[DEFAULT_THEME]) DEFAULT_ITEMS.splice(0, DEFAULT_ITEMS.length, ...PRODUCT.samples[DEFAULT_THEME].map((text) => ({ text, mark: "empty" })));
   let items = [];
   let idSeq = 1;
-  let frontMode = true;   // true=首页（全部未勾） false=尾页（显示勾/叉）
+  let frontMode = false;   // 只做尾页：卡片上直接显示勾 / 半对 / 叉
 
   const $ = (s) => document.querySelector(s);
   const page = $("#page");
@@ -1481,12 +1484,8 @@
   function setMode(front) {
     frontMode = front;
     page.classList.toggle("front", front);
-    $("#btnFront").classList.toggle("active", front);
-    $("#btnBack").classList.toggle("active", !front);
     render();
   }
-  $("#btnFront").addEventListener("click", () => setMode(true));
-  $("#btnBack").addEventListener("click", () => setMode(false));
 
   /* ───────────────── 卡片清单渲染 ───────────────── */
   const CHECK_SVG  = '<svg class="mark-check" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6"/></svg>';
@@ -5012,6 +5011,21 @@
     }
   });
 
+  /* 上传至人生通天塔：把今天这张存进「全部清单」，跳过去转到它 */
+  $("#btnTower").addEventListener("click", () => {
+    const k = currentKey();
+    if (!k) { $("#towerTip").textContent = "日期格式不对，先在上面的「日期」里改成 2026.08.18 这样"; return; }
+    if (!items.some((x) => x.text)) { $("#towerTip").textContent = "清单还是空的，先写几件事再上传"; return; }
+    saveDay();
+    if (window.GAME) GAME.exported();
+    location.hash = "#archive";
+    setTimeout(() => {
+      const el = document.querySelector(`#drumViewport .mini[data-key="${k}"]`);
+      if (el) el.classList.add("fresh");
+      if (window.GAME) GAME.toast("✦", "已放进人生通天塔", prettyDate(days[k].label || k));
+    }, 350);
+  });
+
   /* ───────────────── 添加到主屏幕 ─────────────────
      安卓 Chrome / 电脑 Edge、Chrome：浏览器给了安装事件，点按钮直接弹出安装。
      iPhone：苹果不让网页自己添加，只能弹出图文步骤 + 箭头指向分享按钮。
@@ -5292,6 +5306,7 @@
     return G.quests[t];
   }
   function quest(flag) {
+    return;   // 「今日任务」和「今天要做的事」重复，已经去掉
     if (!onToday()) return;
     const q = questsToday();
     if (flag) q.flags[flag] = true;
@@ -5427,10 +5442,6 @@
     const y = $("#buddy");
     y.style.setProperty("--grow", (1 + Math.min(s.streak, 30) * .012).toFixed(3));
     if (!y.classList.contains("hop")) y.dataset.mood = mood();
-    const q = questsToday();
-    $("#questList").innerHTML = q.ids.map((id) => { const def = QUESTS.find((x) => x.id === id), ok = q.done.includes(id);
-      return `<li class="${ok ? "ok" : ""}"><span class="qd">${ok ? "✓" : ""}</span>${esc(def.text)}<em>+15</em></li>`; }).join("");
-    $("#questN").textContent = `${q.done.length}/3`;
   }
 
   /* ── 徽章墙 + 补签卡商店 ── */
@@ -5654,7 +5665,7 @@
   });
   $("#meBadgeWall").addEventListener("click", () => $("#hudBadges").click());
 
-  window.GAME = { onMark, quest, badge, hud, swipeable, isOwned, askUnlock, decorateSwatches, exported, sealed, restore, rollback, sealCard, me, meStop, state: () => JSON.parse(JSON.stringify(G)) };
+  window.GAME = { onMark, quest, toast, badge, hud, swipeable, isOwned, askUnlock, decorateSwatches, exported, sealed, restore, rollback, sealCard, me, meStop, state: () => JSON.parse(JSON.stringify(G)) };
   if (document.body.dataset.view === "me") me();
   autoFreeze(); decorateSwatches(); questsToday(); hud(); sealCard();
 
@@ -5790,8 +5801,14 @@
 
   /* 注册 Service Worker（离线缓存 / 可安装） */
   if ("serviceWorker" in navigator) {
+    /* 新版装好接管页面时自动刷新一次，手机上不用手动关掉重开 */
+    const hadSW = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadSW && !reloaded) { reloaded = true; location.reload(); } });
+    /* 从后台切回来时也检查一下新版 */
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {}); });
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      navigator.serviceWorker.register("./service-worker.js").then((r) => r.update()).catch(() => {});
     });
   }
 
@@ -5826,7 +5843,7 @@
     { text: "早起 · 喝一杯温水", mark: "check" }, { text: "上班", mark: "check" }, { text: "今天发工资！", mark: "check" },
     { text: "yoga", mark: "check" }, { text: "敷面膜", mark: "cross" }, { text: "duolingo", mark: "check" }, { text: "看德剧", mark: "cross" },
   ]);
-  if (q.get("mode") === "back") { frontMode = false; page.classList.remove("front"); $("#btnFront").classList.remove("active"); $("#btnBack").classList.add("active"); }
+  if (q.get("mode") === "front") setMode(true);
   if (q.get("solo") === "week" && window.GAME) { const h = weekCard(); document.body.className = ""; document.body.innerHTML = h; }
   else if (q.has("solo")) { document.body.classList.add("solo"); location.hash = "#studio"; }
   render();
