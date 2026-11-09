@@ -11,7 +11,7 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 17   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 18   # 改了代码就加 1，手机上装好的版本会自动换新
 SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
@@ -97,6 +97,36 @@ self.addEventListener("fetch", (e) => {{
     return r;
   }})));
 }});
+""" + REMIND_SW.replace("__UP__", up)
+
+
+# 提醒：App 关着时由后台定期唤醒（安卓 Chrome 的 periodicSync）检查；页面把今天的待办数写在缓存里的 __remind.json
+REMIND_SW = """
+const p2 = (n) => String(n).padStart(2, "0");
+async function remindCheck() {
+  const c = await caches.open("daily-plan-remind"), r = await c.match("./__remind.json");
+  if (!r) return;
+  const s = await r.json();
+  if (!s.on) return;
+  const now = new Date(), today = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`;
+  const [h, m] = String(s.time || "20:00").split(":").map(Number);
+  if (s.last === today || now.getHours() * 60 + now.getMinutes() < h * 60 + m) return;
+  const n = s.day === today ? s.pending : null;
+  if (n === 0) return;
+  const title = n === null ? "今天的清单还没写哦" : `还有 ${n} 件待办`;
+  const body = s.streak ? `连胜 ${s.streak} 天了，别断在今天哦` : "小Y在等你回来打勾 ✦";
+  await self.registration.showNotification(title, { body, icon: "__UP__icon-192.png", badge: "__UP__icon-192.png", tag: "remind" });
+  s.last = today;
+  await c.put("./__remind.json", new Response(JSON.stringify(s), { headers: { "content-type": "application/json" } }));
+}
+self.addEventListener("periodicsync", (e) => { if (e.tag === "remind") e.waitUntil(remindCheck()); });
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ws) => {
+    const w = ws.find((x) => "focus" in x);
+    return w ? w.focus() : self.clients.openWindow("./index.html#today");
+  }));
+});
 """
 
 
