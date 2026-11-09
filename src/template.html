@@ -345,6 +345,9 @@
     background:var(--sage-soft); border:1px solid var(--sage); border-radius:16px;
   }
   .install-banner[hidden] { display:none; }
+  .install-banner.risk { background:#fff1ec; border-color:#e0603a; color:#5a2412; }
+  .install-banner.risk b { color:#c2410c; } .install-banner.risk span { color:#7a3a22; }
+  .install-banner.risk .btn.primary { background:#e0603a; border-color:#e0603a; }
   .install-banner div { flex:1; min-width:0; }
   .install-banner b { display:block; font-size:15px; }
   .install-banner span { display:block; font-size:12px; color:var(--ink-2); margin-top:2px; }
@@ -580,6 +583,9 @@
   .mini-foot { display:flex; justify-content:space-between; align-items:center; margin-top:.6em; font-family:var(--font-latin); font-size:.85em; color:var(--ink-soft); }
   .mini-rate { flex:1; height:.25em; margin:0 .6em; background:var(--line-soft); border-radius:9px; overflow:hidden; }
   .mini-rate i { display:block; height:100%; background:var(--accent); }
+  /* 上传过的那天：直接放制好的成品卡截图 */
+  .mini.shot { padding:0; background:#eee; }
+  .mini.shot img { display:block; width:100%; height:100%; object-fit:cover; pointer-events:none; -webkit-user-drag:none; }
 
   .arc-empty { max-width:420px; margin:60px auto; padding:0 24px; text-align:center; color:var(--ink-2); line-height:1.8; font-size:14px; }
 
@@ -812,7 +818,8 @@
   .hud-bar i { display:block; height:100%; width:0; border-radius:99px; background:linear-gradient(90deg, #ffc21a, #ff8a1a); transition:width .6s cubic-bezier(.3,.7,.3,1); }
   .seal-card { display:flex; align-items:center; gap:12px; margin-bottom:12px; padding:10px 10px 10px 12px; border-radius:16px; background:var(--surface); border:1.5px dashed var(--sage); }
   .seal-card[hidden] { display:none; }
-  .seal-card div { flex:1; min-width:0; } .seal-card b { display:block; font-size:14px; } .seal-card small { display:block; font-size:11.5px; color:var(--ink-3); line-height:1.5; }
+  .seal-card { flex-wrap:wrap; }
+  .seal-card div { flex:1 1 170px; min-width:0; } .seal-card b { display:block; font-size:14px; } .seal-card small { display:block; font-size:11.5px; color:var(--ink-3); line-height:1.5; }
   .seal-card .btn { flex:none; white-space:nowrap; min-height:36px; padding:6px 12px; }
   .seal-ico { flex:none; width:34px; height:34px; background:no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 8.5 12 4l8 4.5v9L12 22l-8-4.5Z' fill='%23ffe3a3' stroke='%23b5452e' stroke-width='1.3' stroke-linejoin='round'/><path d='M4 8.5 12 13l8-4.5M12 13v9' fill='none' stroke='%23b5452e' stroke-width='1.3'/><circle cx='12' cy='13' r='2.6' fill='%23b5452e'/></svg>"); }
   .quests { margin-bottom:16px; padding:10px 14px 8px; border-radius:16px; background:var(--surface); border:1.5px solid var(--rule); }
@@ -846,9 +853,20 @@
   .me-stats small { font-size:11.5px; color:var(--ink-3); }
   .me-emo { padding:10px 14px 12px; border-radius:16px; background:var(--surface); border:1.5px solid var(--rule); }
   .me-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .me-wrap .rm-btns .btn { padding:8px 6px; font-size:13.5px; white-space:nowrap; letter-spacing:0; }
   .me-chips button { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:99px; border:1.5px solid var(--rule); background:var(--surface-2);
     color:var(--ink-1); font:inherit; font-size:13px; cursor:pointer; }
   .me-chips button[aria-pressed="true"] { border-color:var(--ink-1); }
+  .sf-warn { margin:8px 0 0; padding:9px 11px; border-radius:12px; background:#fff1ec; color:#9a3412; font-size:13px; line-height:1.55; }
+  .sf-warn[hidden] { display:none; }
+  .sf-list { list-style:none; margin:8px 0 0; padding:0; display:grid; gap:5px; font-size:13px; color:var(--ink-2); }
+  .sf-list li { display:flex; justify-content:space-between; gap:10px; }
+  .sf-list li b { font-weight:600; color:var(--ink-1); text-align:right; }
+  .sf-list li b.bad { color:#d9480f; } .sf-list li b.good { color:var(--sage); }
+  .me-safe details { margin-top:10px; font-size:12.5px; color:var(--ink-2); line-height:1.7; }
+  .me-safe summary { cursor:pointer; color:var(--ink-1); font-size:13px; }
+  .me-safe details ul { margin:6px 0 0; padding-left:1.2em; }
+  #pasteText { width:100%; min-height:140px; font:12px/1.5 ui-monospace, monospace; resize:vertical; }
   .rm-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:8px; font-size:14px; color:var(--ink-2); }
   .rm-time { width:auto; min-height:36px; padding:6px 10px; font-variant-numeric:tabular-nums; }
   .rm-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
@@ -1211,6 +1229,31 @@
           <div class="q-head"><span>小Y 的眼睛颜色</span><small>颜色就是心情</small></div>
           <div class="me-chips" id="meEmo"></div>
         </div>
+        <div class="me-emo me-safe" id="meSafe">
+          <div class="q-head"><span>数据安全</span><small id="sfState"></small></div>
+          <p class="sf-warn" id="sfWarn" hidden></p>
+          <ul class="sf-list" id="sfList"></ul>
+          <div class="rm-btns">
+            <button class="btn primary" id="sfFile">备份到文件</button>
+            <button class="btn" id="sfCopy">复制备份文字</button>
+          </div>
+          <div class="rm-btns">
+            <button class="btn" id="sfFromFile">从文件恢复</button>
+            <button class="btn" id="sfPaste">粘贴恢复</button>
+          </div>
+          <details>
+            <summary>什么情况会丢记录？</summary>
+            <ul>
+              <li>记录只存在这台手机的这个浏览器里，不上传，也没有账号。</li>
+              <li>清除了 Safari / Chrome 的「历史记录与网站数据」。</li>
+              <li>iPhone 用 Safari 打开、没添加到主屏幕，连续 7 天不打开，苹果会自动清掉。</li>
+              <li>删掉了主屏幕上的每日计划图标（iPhone 会连记录一起删）。</li>
+              <li>在微信、小红书里点开：记录存在它们的临时空间，清缓存就没了；而且和浏览器里的记录互不相通。</li>
+              <li>无痕 / 隐私模式、换手机、手机空间严重不足。</li>
+            </ul>
+            最稳的做法：添加到主屏幕，每周「备份到文件」或「复制备份文字」存进备忘录 / 发给微信文件传输助手一次。
+          </details>
+        </div>
         <div class="me-emo me-remind">
           <div class="q-head"><span>提醒</span><small id="rmState">没开</small></div>
           <div class="rm-row"><span>每天几点叫我</span><input class="field rm-time" type="time" id="rmTime" value="20:00"></div>
@@ -1250,14 +1293,22 @@
     <div class="dialog-actions"><button class="btn" id="unClose">先不了</button></div>
   </dialog>
 
+  <dialog class="day-dialog" id="pasteDialog">
+    <h3>粘贴恢复</h3>
+    <p class="chip">把之前「复制备份文字」存下的整段文字粘贴进来。会和现在的记录合并，同一天保留较新的那份，不会删掉现有的。</p>
+    <textarea class="field" id="pasteText" placeholder='{"app":"daily-plan", ...}'></textarea>
+    <div class="dialog-actions"><button class="btn" id="pasteCancel">取消</button><button class="btn primary" id="pasteGo">恢复</button></div>
+  </dialog>
+
   <!-- 第一次打开的 3 步引导 -->
   <dialog class="day-dialog tour" id="tourDialog">
     <h3>欢迎来到 Y世界 ✦</h3>
     <ol class="tour-steps">
       <li><b>今日</b>写下今天要做的事，做完啦点一下是对号<svg class="hint-ic" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6"/></svg>，点两下是做啦但没做完<svg class="hint-ic" viewBox="0 0 24 24"><path d="M5 13.2 L9.6 17.6 L19 6.6 M11.4 8.6 L17.8 14.2"/></svg>，点三下是今日未开启这件事<svg class="hint-ic" viewBox="0 0 24 24"><path d="M7 7 L17 17 M17 7 L7 17"/></svg>。</li>
-      <li><b>制作卡片</b>清单下面往下滑，一键生成 1080×1440 的小红书卡片：首页（早上发）和尾页（晚上打完勾发），还能换配色、放自己的照片。</li>
+      <li><b>制作卡片</b>清单下面往下滑，生成 1080×1440 的卡片，换主题、放照片，再一键上传到「人生通天塔」。</li>
       <li><b>像游戏一样</b>每完成一件得星星，每天打卡攒连胜、收集徽章；星星可以解锁新主题。</li>
-      <li><b>全部清单</b>每一天都会围成一个卷筒慢慢转，点开就能回看。数据只存在你自己的手机里。</li>
+      <li><b>全部清单</b>每一天都会围成一个卷筒慢慢转，点开就能回看。</li>
+      <li><b>记得备份</b>记录只存在这台手机里，不上传。清浏览器数据、删掉主屏图标都会让它消失。请添加到主屏幕，并在「我的 → 数据安全」每周备份一次。</li>
     </ol>
     <div class="dialog-actions"><button class="btn primary" id="tourGo">开始今天</button></div>
   </dialog>
@@ -1340,6 +1391,7 @@
   let days = loadDays();
   function persist() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(days)); } catch (e) {}
+    if (window.vaultSave) vaultSave();
   }
   /* "2026.08.18 周二" → "2026-08-18" */
   function keyFrom(str) {
@@ -2374,7 +2426,10 @@
   let drumAngle = 0, spinOn = !reduceMotion, hoverPause = false, dragging = null;
   let rings = [], rafId = 0, lastT = 0;
 
+  /* 成品卡截图：上传至人生通天塔时把 1080×1440 的卡缩成小图存进 IndexedDB，卷筒里优先放它 */
+  const shots = {};   // key → objectURL
   function miniCardHTML(k, d) {
+    if (shots[k]) return `<div class="mini shot" data-key="${k}"><img src="${shots[k]}" alt="${esc(d.label || k)}"></div>`;
     const its = d.items.filter((x) => x.text);
     const done = its.filter((x) => x.mark === "check").length;
     const theme = THEMES.includes(d.theme) ? d.theme : DEFAULT_THEME;
@@ -2514,6 +2569,7 @@
   $("#dlgDelete").addEventListener("click", () => {
     if (!confirm("删除这一天的清单？删除后无法恢复（除非你导出过备份）。")) return;
     delete days[dlgKey];
+    if (shots[dlgKey]) { URL.revokeObjectURL(shots[dlgKey]); delete shots[dlgKey]; idb.del("shot:" + dlgKey); }
     persist();
     closeDlg();
     buildDrum();
@@ -2524,8 +2580,7 @@
     const d = new Date();
     const snap = window.GAME ? GAME.state() : null;
     if (window.GAME) GAME.sealed();   // 先记上这次封存（含 +20 星），备份文件里就是最新的；取消了再退回去
-    const data = { app: "daily-plan", version: 2, exportedAt: d.toISOString(), days, palettes: palSel,
-      lastTheme: document.body.dataset.theme, game: window.GAME ? GAME.state() : undefined };
+    const data = backupData();
     const name = `每日计划备份_${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}.json`;
     const file = new File([JSON.stringify(data, null, 2)], name, { type: "application/json" });
     try {
@@ -2539,6 +2594,31 @@
       return true;
     } catch (e) { if (snap) GAME.rollback(snap); return false; }   // 用户取消
   }
+  /* 一份完整的备份：清单 + 配色 + 游戏进度 + 已解锁的主题 */
+  function backupData() {
+    const unlocks = {};
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith("dailyplan.unlock.")) unlocks[k] = localStorage.getItem(k); } } catch (e) {}
+    return { app: "daily-plan", version: 3, exportedAt: new Date().toISOString(), days, palettes: palSel,
+      lastTheme: document.body.dataset.theme, game: window.GAME ? GAME.state() : undefined, unlocks };
+  }
+  /* 合并一份备份进来：同一天保留较新的，不删现有的 */
+  function mergeBackup(data) {
+    if (!data || typeof data !== "object" || !data.days) throw new Error("bad");
+    let n = 0;
+    Object.entries(data.days).forEach(([k, d]) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !d || !Array.isArray(d.items)) return;
+      if (!days[k] || (d.updatedAt || 0) > (days[k].updatedAt || 0)) { days[k] = d; n++; }
+    });
+    persist();
+    if (data.palettes) { Object.assign(palSel, data.palettes); savePal(); }
+    if (data.unlocks) { try { Object.entries(data.unlocks).forEach(([k, v]) => { if (k.startsWith("dailyplan.unlock.") && !localStorage.getItem(k)) localStorage.setItem(k, v); }); } catch (e) {} }
+    const gameBack = data.game && window.GAME ? GAME.restore(data.game) : false;
+    const k = currentKey();
+    if (n && days[k]) loadDay(k);
+    buildDrum(); renderAll();
+    return { n, gameBack };
+  }
+  function mergeMsg(r) { return `已导入 ${r.n} 天的清单${r.gameBack ? "，星星、连胜、徽章和已解锁的主题也恢复了" : ""}。`; }
   $("#btnBackup").addEventListener("click", doBackup);
   $("#btnRestore").addEventListener("click", () => $("#restoreFile").click());
   $("#restoreFile").addEventListener("change", (e) => {
@@ -2547,18 +2627,8 @@
     const r = new FileReader();
     r.onload = () => {
       try {
-        const data = JSON.parse(r.result);
-        const incoming = data.days || {};
-        let n = 0;
-        Object.entries(incoming).forEach(([k, d]) => {
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !d || !Array.isArray(d.items)) return;
-          if (!days[k] || (d.updatedAt || 0) > (days[k].updatedAt || 0)) { days[k] = d; n++; }
-        });
-        persist();
-        if (data.palettes) { Object.assign(palSel, data.palettes); savePal(); }
-        const gameBack = data.game && window.GAME ? GAME.restore(data.game) : false;
-        buildDrum(); renderAll();
-        alert(`已导入 ${n} 天的清单${gameBack ? "，星星、连胜、徽章和已解锁的主题也恢复了" : ""}。`);
+        alert(mergeMsg(mergeBackup(JSON.parse(r.result))));
+        if (window.safeUI) safeUI();
       } catch (err) {
         alert("这个文件不是每日计划的备份。");
       }
@@ -2580,6 +2650,7 @@
     if (v === "today") { renderToday(); render(); fit(); }
     if (v === "archive") { buildDrum(); if (window.GAME) GAME.quest("archive"); } else stopSpin();
     if (window.GAME) { if (v === "me") GAME.me(); else GAME.meStop(); }
+    if (v === "me" && window.safeUI) safeUI();
     if (h === "studio" && !document.body.classList.contains("solo")) requestAnimationFrame(goStudio);
     else window.scrollTo(0, 0);
   }
@@ -2618,8 +2689,29 @@
           tx.onerror = () => { db.close(); res(); };
         });
       } catch (e) {}
+    },
+    async del(key) {
+      try {
+        const db = await this.open();
+        await new Promise((res) => {
+          const tx = db.transaction("kv", "readwrite").objectStore("kv").delete(key);
+          tx.onsuccess = () => { db.close(); res(); };
+          tx.onerror = () => { db.close(); res(); };
+        });
+      } catch (e) {}
     }
   };
+
+  /* 开页面时把存过的成品卡截图读回来 */
+  (async () => {
+    const ks = Object.keys(days);
+    let n = 0;
+    for (const k of ks) {
+      const b = await idb.get("shot:" + k);
+      if (b instanceof Blob) { shots[k] = URL.createObjectURL(b); n++; }
+    }
+    if (n && document.body.dataset.view === "archive") buildDrum();
+  })();
 
   async function refreshFolderLabel() {
     if (!canPickDir) {
@@ -2797,11 +2889,38 @@
   });
 
   /* 上传至人生通天塔：把今天这张存进「全部清单」，跳过去转到它 */
-  $("#btnTower").addEventListener("click", () => {
+  /* 把现在制好的成品卡缩成 432×576 的 JPEG 存起来，通天塔里放的就是这张 */
+  async function captureShot(k) {
+    if (!window.htmlToImage) return;
+    const big = await makeBlob();
+    const img = await new Promise((res, rej) => {
+      const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(big);
+    });
+    const cv = document.createElement("canvas");
+    cv.width = 432; cv.height = 576;
+    const cx = cv.getContext("2d");
+    cx.imageSmoothingQuality = "high";
+    cx.drawImage(img, 0, 0, cv.width, cv.height);
+    URL.revokeObjectURL(img.src);
+    const small = await new Promise((res) => cv.toBlob(res, "image/jpeg", 0.86));
+    if (!small) return;
+    await idb.set("shot:" + k, small);
+    if (shots[k]) URL.revokeObjectURL(shots[k]);
+    shots[k] = URL.createObjectURL(small);
+  }
+
+  $("#btnTower").addEventListener("click", async () => {
     const k = currentKey();
     if (!k) { $("#towerTip").textContent = "日期格式不对，先在上面的「日期」里改成 2026.08.18 这样"; return; }
     if (!items.some((x) => x.text)) { $("#towerTip").textContent = "清单还是空的，先写几件事再上传"; return; }
+    const btn = $("#btnTower");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    $("#towerTip").textContent = "正在把成品卡放进通天塔…";
     saveDay();
+    try { await captureShot(k); $("#towerTip").textContent = ""; }
+    catch (e) { $("#towerTip").textContent = "成品卡没截成，先放了清单版"; }
+    finally { btn.disabled = false; }
     if (window.GAME) GAME.exported();
     location.hash = "#archive";
     setTimeout(() => {
@@ -2829,8 +2948,16 @@
   function syncInstallUI() {
     const can = !standalone && (installEvt || isIOS || isAndroid || inApp);
     let dismissed = false;
-    try { dismissed = localStorage.getItem(INSTALL_KEY) === "1"; } catch (e) {}
-    $("#installBanner").hidden = !can || dismissed || !(isIOS || isAndroid || inApp);
+    const risk = !standalone && (inApp || isIOS);
+    try { dismissed = risk ? sessionStorage.getItem(INSTALL_KEY) === "1" : localStorage.getItem(INSTALL_KEY) === "1"; } catch (e) {}
+    const bn = $("#installBanner");
+    bn.classList.toggle("risk", risk);
+    if (risk) {
+      bn.querySelector("b").textContent = inApp ? "⚠ 在这里打开，记录随时可能丢" : "⚠ 7 天不打开，记录会被清掉";
+      bn.querySelector("span").textContent = inApp ? "微信 / 小红书里的网页是临时空间。请用浏览器打开，再添加到主屏幕" : "Safari 会自动清理不常打开的网站。添加到主屏幕就不会";
+      $("#btnInstallBanner").textContent = inApp ? "怎么做" : "添加到主屏幕";
+    }
+    bn.hidden = !can || dismissed || !(isIOS || isAndroid || inApp);
     $("#btnInstallTop").hidden = !can || !$("#installBanner").hidden && document.body.dataset.view === "today";
   }
   window.addEventListener("hashchange", () => syncInstallUI());
@@ -2875,7 +3002,7 @@
   $("#btnInstallTop").addEventListener("click", doInstall);
   $("#btnInstallBanner").addEventListener("click", doInstall);
   $("#btnInstallDismiss").addEventListener("click", () => {
-    try { localStorage.setItem(INSTALL_KEY, "1"); } catch (e) {}
+    try { ($("#installBanner").classList.contains("risk") ? sessionStorage : localStorage).setItem(INSTALL_KEY, "1"); } catch (e) {}
     $("#installBanner").hidden = true;
   });
   const closeInstall = () => { $("#installArrow").hidden = true; $("#installDialog").close ? $("#installDialog").close() : $("#installDialog").removeAttribute("open"); };
@@ -2987,7 +3114,7 @@
     const base = { stars: 0, earned: 0, checks: 0, awarded: {}, log: {}, badges: {}, freezes: 1, frozen: [], owned: [], quests: {}, exports: 0, early: {}, level: 1 };
     try { return Object.assign(base, JSON.parse(localStorage.getItem(GKEY)) || {}); } catch (e) { return base; }
   })();
-  const gsave = () => { try { localStorage.setItem(GKEY, JSON.stringify(G)); } catch (e) {} };
+  const gsave = () => { try { localStorage.setItem(GKEY, JSON.stringify(G)); } catch (e) {} if (window.vaultSave) vaultSave(); };
   const dayAdd = (k, n) => { const [y, m, d] = k.split("-").map(Number); const t = new Date(y, m - 1, d + n); return `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`; };
   const TODAY = () => keyFrom(todayStr());
   const onToday = () => currentKey() === TODAY();
@@ -3363,9 +3490,9 @@
   const DAY_MS = 864e5;
   function sealDue() {
     const n = Object.keys(days).length, now = Date.now();
-    if (n < 3) return false;
-    if (G.snoozeAt && now - G.snoozeAt < 3 * DAY_MS) return false;
-    return !G.backupAt || now - G.backupAt > 30 * DAY_MS;
+    if (n < 2) return false;
+    if (G.snoozeAt && now - G.snoozeAt < 2 * DAY_MS) return false;
+    return !G.backupAt || now - G.backupAt > 7 * DAY_MS;
   }
   function sealCard() {
     const due = sealDue();
@@ -3373,14 +3500,14 @@
     if (!due) return;
     const n = Object.keys(days).length;
     $("#sealTitle").textContent = G.backupAt ? `上次封存是 ${Math.floor((Date.now() - G.backupAt) / DAY_MS)} 天前` : `你已经记了 ${n} 天，给它们封个存吧`;
-    $("#sealSub").textContent = "存一份到「文件」或 iCloud，换手机也不丢 · +20 星";
+    $("#sealSub").textContent = "记录只存在这台手机里，清浏览器数据就没了。存一份到「文件」或 iCloud · +20 星";
   }
   function sealed() {
     const m = TODAY().slice(0, 7);
     G.backupAt = Date.now(); G.snoozeAt = 0;
     const first = (G.sealMonths || (G.sealMonths = [])).indexOf(m) < 0;
     if (first) { G.sealMonths.push(m); award(20, null, true); }
-    gsave(); badge("seal"); sealCard();
+    gsave(); badge("seal"); sealCard(); if (window.safeUI) safeUI();
     toast(ICON.freeze, "封存好了", first ? "这个月的日子已经安全存起来 · +20 星" : "又存了一份，放心");
     say("ok");
   }
@@ -3561,6 +3688,103 @@
     rmNote(`打开下载的「每日计划提醒.ics」，选「添加到日历」，以后每天 ${RM.time} 日历会准点提醒。要改时间就先在日历里删掉旧的，再加一次。`);
   });
   window.REMIND = { sync: remindSync };
+
+  /* ── 数据安全 ──
+     1) 自动副本：每次改动后，把完整备份再存一份到 IndexedDB（和 localStorage 分开存），另外按天留最近 7 份。
+        打开时如果发现 localStorage 里的记录比副本少（被清掉一部分），自动合并回来。
+     2) 「我的 → 数据安全」：显示风险、上次备份；备份到文件 / 复制备份文字 / 从文件或粘贴恢复。 */
+  const VAULT = (() => {
+    let dbp = null;
+    const open = () => dbp || (dbp = new Promise((res, rej) => {
+      const r = indexedDB.open("dailyplan-vault", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("snap");
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    }));
+    const run = async (mode, fn) => { const db = await open(); return new Promise((res, rej) => {
+      const t = db.transaction("snap", mode), out = fn(t.objectStore("snap"));
+      t.oncomplete = () => res(out && out.result); t.onerror = () => rej(t.error); }); };
+    return {
+      put: (k, v) => run("readwrite", (st) => { st.put(v, k); }),
+      get: (k) => run("readonly", (st) => st.get(k)),
+      keys: () => run("readonly", (st) => st.getAllKeys()),
+      del: (k) => run("readwrite", (st) => { st.delete(k); }),
+    };
+  })();
+  let vaultT = 0, vaultReady = false;
+  window.vaultSave = () => {
+    if (!vaultReady || !window.indexedDB) return;
+    clearTimeout(vaultT);
+    vaultT = setTimeout(async () => {
+      try {
+        const snap = JSON.parse(JSON.stringify(backupData()));
+        await VAULT.put("latest", snap);
+        await VAULT.put("day-" + TODAY(), snap);
+        const old = (await VAULT.keys()).filter((k) => String(k).startsWith("day-")).sort().slice(0, -7);
+        for (const k of old) await VAULT.del(k);
+      } catch (e) {}
+    }, 1200);
+  };
+  (async () => {
+    try {
+      if (window.indexedDB) {
+        const snap = await VAULT.get("latest");
+        const lost = snap && snap.days && (Object.keys(snap.days).length > Object.keys(days).length || (snap.game && (snap.game.earned || 0) > G.earned));
+        if (lost) {
+          const r = mergeBackup(snap);
+          if (r.n || r.gameBack) setTimeout(() => toast("🛟", "记录找回来了", `从自动副本恢复了 ${r.n} 天${r.gameBack ? "和星星进度" : ""}`), 900);
+        }
+      }
+    } catch (e) {}
+    vaultReady = true; window.vaultSave(); safeUI();
+  })();
+
+  async function safeUI() {
+    const n = Object.keys(days).length, ago = G.backupAt ? Math.floor((Date.now() - G.backupAt) / DAY_MS) : null;
+    let persisted = null;
+    try { persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : null; } catch (e) {}
+    const row = (k, v, cls) => `<li><span>${k}</span><b class="${cls || ""}">${v}</b></li>`;
+    $("#sfList").innerHTML =
+      row("记录", `${n} 天 · 存在这台手机里`) +
+      row("上次备份", ago === null ? "还没备份过" : ago === 0 ? "今天" : `${ago} 天前`, ago === null || ago > 7 ? "bad" : "good") +
+      row("防清理", standalone ? "已装到主屏幕 ✓" : persisted ? "已开启 ✓" : "没装到主屏幕", standalone || persisted ? "good" : "bad") +
+      row("自动副本", window.indexedDB ? "已开 ✓" : "这个浏览器不支持", window.indexedDB ? "good" : "bad");
+    const risky = !standalone && (inApp || isIOS);
+    const due = ago === null || ago > 7;
+    $("#sfState").textContent = risky || due ? "有风险" : "安全";
+    $("#sfState").style.color = risky || due ? "#d9480f" : "var(--sage)";
+    const w = $("#sfWarn");
+    w.hidden = !(risky || due);
+    w.textContent = inApp ? "你现在是在微信 / 小红书里打开的，记录存在它们的临时空间，随时可能被清掉。请先「复制备份文字」存进备忘录，再用浏览器打开并添加到主屏幕，然后「粘贴恢复」。"
+      : risky ? "iPhone 用 Safari 打开、没添加到主屏幕时，连续 7 天不打开，记录会被自动清掉。请添加到主屏幕，并每周备份一次。"
+      : due ? (ago === null ? "你还没有备份过。清浏览器数据、删掉主屏图标、换手机都会让记录消失，先备份一份吧。" : `已经 ${ago} 天没备份了，存一份新的吧。`) : "";
+  }
+  window.safeUI = safeUI;
+  $("#sfFile").addEventListener("click", async () => { await doBackup(); safeUI(); });
+  $("#sfFromFile").addEventListener("click", () => $("#restoreFile").click());
+  $("#sfCopy").addEventListener("click", async () => {
+    const snap = JSON.parse(JSON.stringify(G));
+    sealed();
+    const text = JSON.stringify(backupData());
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+      const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select(); try { ok = document.execCommand("copy"); } catch (e2) {} ta.remove();
+    }
+    if (!ok) { rollback(snap); alert("这个浏览器不让复制，请用「备份到文件」。"); return; }
+    alert("备份文字已复制。\n\n粘贴到「备忘录」，或发给微信「文件传输助手」存起来。\n以后在「我的 → 数据安全 → 粘贴恢复」里粘回来就能恢复。");
+    safeUI();
+  });
+  const pd = $("#pasteDialog");
+  $("#sfPaste").addEventListener("click", () => { $("#pasteText").value = ""; pd.showModal ? pd.showModal() : pd.setAttribute("open", ""); });
+  $("#pasteCancel").addEventListener("click", () => { pd.close ? pd.close() : pd.removeAttribute("open"); });
+  $("#pasteGo").addEventListener("click", () => {
+    const t = $("#pasteText").value.trim();
+    try {
+      const r = mergeBackup(JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1)));
+      pd.close ? pd.close() : pd.removeAttribute("open");
+      alert(mergeMsg(r)); safeUI();
+    } catch (e) { alert("这段文字不是完整的每日计划备份。要从 { 开头一直复制到 } 结尾。"); }
+  });
   remindUI(); remindSync();
   setTimeout(() => say(mood()), 1200);
 
