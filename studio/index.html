@@ -337,7 +337,12 @@
     background:transparent; color:var(--ink-3); font-size:20px; line-height:1; cursor:pointer;
   }
   .t-del:hover { background:var(--surface-2); color:var(--ink-1); }
+  /* 左边的小把手：按住上下拖，换顺序 */
+  .t-grip { width:22px; height:36px; flex:none; margin:0 -8px 0 -6px; display:grid; place-items:center; color:var(--ink-3); cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none; }
+  .t-grip svg { width:14px; height:20px; fill:currentColor; }
+  .t-item.lifting { z-index:5; box-shadow:0 10px 24px rgba(0,0,0,.18); transition:none !important; cursor:grabbing; opacity:.96; }
   .t-add { display:flex; gap:8px; }
+  .un-gap { margin-top:8px; font-size:13px; color:var(--ink-2); text-align:center; }
   .t-add .field { min-height:46px; font-size:16px; background:var(--surface); }
   .t-add .btn { min-height:46px; padding:0 18px; white-space:nowrap; flex:none; }
   .t-hint { font-size:12px; color:var(--ink-3); margin-top:10px; line-height:1.6; }
@@ -1292,8 +1297,9 @@
   <dialog class="day-dialog unlock-dialog" id="unlockDialog">
     <img id="unPreview" alt="">
     <h3>解锁「<span id="unName"></span>」</h3>
-    <p class="un-sub">每个主题都带 7 套配色。用星星换，或者输入购买时收到的星星密钥。</p>
-    <button class="btn primary big" id="unBuy">用 <span id="unCost">500</span> 星解锁（你有 <span id="unHave">0</span> 星）</button>
+    <p class="un-sub">每个主题都带 7 套配色。攒够 <span id="unCost2">10000</span> 颗星星就能免费换；不想等，花 1 元买一把星星密钥，马上解锁。</p>
+    <button class="btn primary big" id="unBuy">用 <span id="unCost">10000</span> 星解锁</button>
+    <div class="un-gap" id="unGap"></div>
     <div class="un-or">或</div>
     <div class="un-code"><input class="field" id="unCode" placeholder="输入星星密钥" autocomplete="off" autocapitalize="characters"><button class="btn" id="unRedeem">兑换</button></div>
     <div class="un-err" id="unErr"></div>
@@ -1412,7 +1418,9 @@
   function saveDay() {
     const k = currentKey();
     if (!k) return;
+    const towered = days[k] && days[k].towered;
     days[k] = {
+      ...(towered ? { towered } : {}),
       label: $("#dateInput").value.trim(),
       theme: document.body.dataset.theme,
       pal: palSel[document.body.dataset.theme] || 0,
@@ -1632,7 +1640,14 @@
         renderAll();
       });
 
-      li.append(box, text, del);
+      const grip = document.createElement("span");
+      grip.className = "t-grip";
+      grip.setAttribute("aria-label", "按住上下拖动，调整顺序");
+      grip.innerHTML = '<svg viewBox="0 0 10 16"><circle cx="2.5" cy="3" r="1.5"/><circle cx="7.5" cy="3" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13" r="1.5"/><circle cx="7.5" cy="13" r="1.5"/></svg>';
+      grip.addEventListener("pointerdown", (e) => startSort(e, li));
+
+      li.dataset.id = it.id;
+      li.append(grip, box, text, del);
       if (window.GAME) GAME.swipeable(li, it);
       tList.appendChild(li);
     });
@@ -1645,6 +1660,38 @@
     $("#tMsg").textContent = total && done === total ? "今天的都完成了，好好休息 ✓"
       : total && items.every((x) => x.mark !== "empty") ? "今天结束了。没做成的也没关系，明天再来。" : "";
   }
+  /* 按住把手上下拖：被拖的那块跟着手指走，经过别的块就换位置，松手后存新顺序 */
+  function startSort(e, li) {
+    e.preventDefault(); e.stopPropagation();
+    const grip = e.currentTarget;
+    try { grip.setPointerCapture(e.pointerId); } catch (_) {}
+    const grab = e.clientY - li.getBoundingClientRect().top;
+    let shift = 0;
+    li.classList.add("lifting");
+    if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {}
+    const move = (ev) => {
+      const want = ev.clientY - grab, mid = want + li.offsetHeight / 2;
+      let before = null;
+      for (const sib of tList.children) {
+        if (sib === li) continue;
+        const r = sib.getBoundingClientRect();
+        if (mid < r.top + r.height / 2) { before = sib; break; }
+      }
+      if (li.nextElementSibling !== before) tList.insertBefore(li, before);
+      const natural = li.getBoundingClientRect().top - shift;
+      shift = want - natural;
+      li.style.transform = `translateY(${shift}px)`;
+    };
+    const end = () => {
+      grip.removeEventListener("pointermove", move); grip.removeEventListener("pointerup", end); grip.removeEventListener("pointercancel", end);
+      li.classList.remove("lifting"); li.style.transform = "";
+      const next = [...tList.children].map((x) => items.find((it) => it.id === Number(x.dataset.id))).filter(Boolean);
+      if (next.length === items.length && next.some((x, i) => x !== items[i])) { items = next; saveDay(); }
+      renderAll();
+    };
+    grip.addEventListener("pointermove", move); grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
+  }
+
   $("#tAdd").addEventListener("submit", (e) => {
     e.preventDefault();
     const v = $("#tAddInput").value.trim();
@@ -1667,6 +1714,7 @@
     $("#dateInput").value = todayStr();
     syncDateText();
     const k = currentKey();
+    if (days[k] && days[k].towered) { loadDay(k); nextCard(k); return; }
     if (!loadDay(k)) {
       const recent = sortedKeys()[0];
       setItems(recent ? days[recent].items : DEFAULT_ITEMS);
@@ -1677,6 +1725,18 @@
   });
 
   function renderAll() { render(); renderToday(); }
+
+  /* 放进通天塔的那天就封存了：清单自动换成下一天的新卡（事项文字留着、勾叉清空），再打勾也不会改到塔里那张 */
+  function labelOf(k) { const [y, m, d] = k.split("-").map(Number), t = new Date(y, m - 1, d); return `${y}.${p2(m)}.${p2(d)} 周${WDAY[t.getDay()]}`; }
+  function nextCard(k) {
+    const [y, m, d] = k.split("-").map(Number), n = new Date(y, m - 1, d);
+    do { n.setDate(n.getDate() + 1); k = `${n.getFullYear()}-${p2(n.getMonth() + 1)}-${p2(n.getDate())}`; } while (days[k] && days[k].towered);
+    const texts = items.filter((x) => x.text).map((x) => ({ text: x.text, mark: "empty" }));
+    $("#dateInput").value = labelOf(k);
+    syncDateText();
+    if (!loadDay(k)) setItems(texts.length ? texts : DEFAULT_ITEMS);
+    renderAll();
+  }
 
   /* ───────────────── 设计主题：整页版式 ─────────────────
      每个主题一个函数，返回 1080×1440 的整页 HTML。
@@ -5137,11 +5197,13 @@
     catch (e) { $("#towerTip").textContent = "成品卡没截成，先放了清单版"; }
     finally { btn.disabled = false; }
     if (window.GAME) GAME.exported();
+    days[k].towered = Date.now(); persist();
+    nextCard(k);
     location.hash = "#archive";
     setTimeout(() => {
       const el = document.querySelector(`#drumViewport .mini[data-key="${k}"]`);
       if (el) el.classList.add("fresh");
-      if (window.GAME) GAME.toast("✦", "已放进人生通天塔", prettyDate(days[k].label || k));
+      if (window.GAME) GAME.toast("✦", "已放进人生通天塔", "清单换成新的一张：" + prettyDate($("#dateInput").value));
     }, 350);
   });
 
@@ -5587,7 +5649,7 @@
   /* ── 左右滑动打勾（手机）：右滑 ✓、左滑 ✗ ── */
   function swipeable(li, it) {
     let x0 = 0, y0 = 0, dx = 0, on = false, locked = false;
-    li.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse" || e.target.closest(".t-text:focus, .t-del")) return; x0 = e.clientX; y0 = e.clientY; dx = 0; on = true; locked = false; });
+    li.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse" || e.target.closest(".t-text:focus, .t-del, .t-grip")) return; x0 = e.clientX; y0 = e.clientY; dx = 0; on = true; locked = false; });
     li.addEventListener("pointermove", (e) => {
       if (!on) return;
       const mx = e.clientX - x0, my = e.clientY - y0;
@@ -5608,7 +5670,8 @@
 
   /* ── 主题解锁：经典款 + 怪朋友免费，其他用星星换，或输入已购买的星星密钥 ── */
   const FREE_THEMES = PRODUCT.freeThemes || THEMES;
-  const COST = PRODUCT.cost || 500;
+  const COST = PRODUCT.cost || 10000;
+  const costTag = COST >= 10000 ? COST / 10000 + "万" : String(COST);
   const ownedDesigned = () => DESIGNED.filter((t) => isOwned(t) && !(PRODUCT.freeThemes || []).includes(t));
   function legacyOwned(t) {   // 以前买过单款、在本机解锁过
     const map = PRODUCT.themeOf || {};
@@ -5620,7 +5683,8 @@
   function askUnlock(t) {
     wantTheme = t;
     $("#unName").textContent = THEME_NAME[t] || t;
-    $("#unCost").textContent = COST; $("#unHave").textContent = G.stars;
+    $("#unCost").textContent = COST; $("#unCost2").textContent = COST;
+    $("#unGap").textContent = G.stars < COST ? `你有 ${G.stars} 星，还差 ${COST - G.stars} 星` : `你有 ${G.stars} 星，够换啦`;
     $("#unBuy").disabled = G.stars < COST;
     $("#unErr").textContent = ""; $("#unCode").value = "";
     $("#unPreview").src = `${PRODUCT.base || ""}previews/${({ lwf: "weird", y2k: "y2k", bauhaus: "bauhaus", songyuan: "songhua", business: "calibre", autumn: "ripple", comic: "pop", guai: "guai" })[t]}.jpg`;
@@ -5655,7 +5719,7 @@
       const t = b.dataset.setTheme, lock = !isOwned(t);
       b.classList.toggle("locked", lock);
       let tag = b.querySelector(".sw-lock");
-      if (lock && !tag) { tag = document.createElement("span"); tag.className = "sw-lock"; tag.innerHTML = ICON.lock + COST; b.appendChild(tag); }
+      if (lock && !tag) { tag = document.createElement("span"); tag.className = "sw-lock"; tag.innerHTML = ICON.lock + costTag; b.appendChild(tag); }
       if (!lock && tag) tag.remove();
     });
   }
@@ -6046,7 +6110,8 @@
     try { last = localStorage.getItem("dailyplan.lastTheme"); } catch (e) {}
     if (THEMES.includes(last) && (!window.GAME || GAME.isOwned(last))) setTheme(last, false);
   }
-  if (!loadDay(currentKey())) {
+  if (days[currentKey()] && days[currentKey()].towered) { loadDay(currentKey()); nextCard(currentKey()); }
+  else if (!loadDay(currentKey())) {
     const recent = sortedKeys()[0];
     if (recent) {
       setItems(days[recent].items.map((x) => ({ text: x.text, mark: "empty" })));
