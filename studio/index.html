@@ -866,6 +866,13 @@
   dialog.icon-warn h3 { margin:0 0 10px; font-size:19px; line-height:1.4; color:#c2410c; }
   dialog.icon-warn p { margin:0; font-size:14.5px; line-height:1.75; color:var(--ink-1); }
   dialog.icon-warn .dialog-actions .btn:first-child { background:#e0603a; border-color:#e0603a; color:#fff; }
+  dialog.bk-dialog h3 { margin:0 0 10px; font-size:19px; }
+  dialog.bk-dialog { max-height:86vh; overflow:auto; }
+  .bk-file { margin:0 0 12px; padding:9px 12px; border-radius:12px; background:var(--surface-2); font:600 13px/1.5 ui-monospace, monospace; word-break:break-all; }
+  .bk-sec { margin:12px 0 4px; font-weight:700; font-size:14.5px; color:var(--ink-1); }
+  .bk-lead { margin:0 0 4px; font-size:14px; line-height:1.7; color:var(--ink-1); }
+  .bk-steps { margin:0; padding-left:1.3em; font-size:14px; line-height:1.75; color:var(--ink-1); }
+  .bk-tip { margin:10px 0 0; font-size:12.5px; line-height:1.6; color:var(--ink-3); }
   .top-list { list-style:none; margin:8px 0 2px; padding:0; display:grid; gap:9px; }
   .top-list li { display:grid; grid-template-columns:26px 1fr auto; align-items:center; gap:4px 10px; font-size:14px; color:var(--ink-1); }
   .top-list .rk { grid-row:span 2; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--font-latin, sans-serif); background:var(--surface-2); border:1.5px solid var(--rule); }
@@ -1269,6 +1276,10 @@
             <button class="btn" id="sfFromFile">从文件恢复</button>
             <button class="btn" id="sfPaste">粘贴恢复</button>
           </div>
+          <details class="bk-help" id="bkHelp">
+            <summary>备份存到哪了？怎么导回来？</summary>
+            <div id="bkHelpBody"></div>
+          </details>
           <details>
             <summary>什么情况会丢记录？</summary>
             <ul>
@@ -1323,6 +1334,11 @@
     <div class="dialog-actions"><button class="btn" id="unClose">先不了</button></div>
   </dialog>
 
+  <dialog class="day-dialog bk-dialog" id="bkDialog">
+    <h3 id="bkTitle">备份好了 ✓</h3>
+    <div id="bkBody"></div>
+    <div class="dialog-actions"><button class="btn primary" id="bkOk">知道了</button></div>
+  </dialog>
   <dialog class="day-dialog" id="pasteDialog">
     <h3>粘贴恢复</h3>
     <p class="chip">把之前「复制备份文字」存下的整段文字粘贴进来。会和现在的记录合并，同一天保留较新的那份，不会删掉现有的。</p>
@@ -4872,21 +4888,48 @@
     buildDrum();
   });
 
-  /* 备份：导出 / 导入 JSON（合并，同一天保留较新的） */
+  /* 备份：导出 / 导入 JSON（合并，同一天保留较新的）
+     文件备份里还带上通天塔每一天的成品卡图片（shots），不然恢复后塔里全是素卡；复制文字的备份太长放不下图片，只带清单。 */
+  const blobToDataURL = (b) => new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => res(null); fr.readAsDataURL(b); });
+  async function shotsData() {
+    const out = {};
+    for (const k of Object.keys(days)) {
+      const b = await idb.get("shot:" + k);
+      if (b instanceof Blob) { const u = await blobToDataURL(b); if (u) out[k] = u; }
+    }
+    return out;
+  }
+  /* 把备份里的成品卡图片写回手机：这一天本地没有图，或者这一天刚被备份里的较新版本替换了 */
+  async function restoreShots(map, replaced) {
+    let n = 0;
+    for (const [k, u] of Object.entries(map || {})) {
+      if (!days[k] || typeof u !== "string" || !u.startsWith("data:image/")) continue;
+      if (shots[k] && !replaced.has(k)) continue;
+      try {
+        const b = await (await fetch(u)).blob();
+        if (await idb.set("shot:" + k, b)) { if (shots[k]) URL.revokeObjectURL(shots[k]); shots[k] = URL.createObjectURL(b); n++; }
+      } catch (e) {}
+    }
+    if (n) buildDrum();
+    return n;
+  }
   async function doBackup() {
     const d = new Date();
     const snap = window.GAME ? GAME.state() : null;
     if (window.GAME) GAME.sealed();   // 先记上这次封存（含 +20 星），备份文件里就是最新的；取消了再退回去
     const data = backupData();
+    try { data.shots = await shotsData(); } catch (e) {}
     const name = `每日计划备份_${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}.json`;
     const file = new File([JSON.stringify(data, null, 2)], name, { type: "application/json" });
     try {
       if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "每日计划备份" });   // 选「存储到文件」/ iCloud / 网盘
+        bkShow({ name, how: "share" });
       } else {
         const url = URL.createObjectURL(file), a = document.createElement("a");
         a.href = url; a.download = name; a.click();
         setTimeout(() => URL.revokeObjectURL(url), 5000);
+        bkShow({ name, how: "download" });
       }
       return true;
     } catch (e) { if (snap) GAME.rollback(snap); return false; }   // 用户取消
@@ -4902,10 +4945,12 @@
   function mergeBackup(data) {
     if (!data || typeof data !== "object" || !data.days) throw new Error("bad");
     let n = 0;
+    const replaced = new Set();
     Object.entries(data.days).forEach(([k, d]) => {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !d || !Array.isArray(d.items)) return;
-      if (!days[k] || (d.updatedAt || 0) > (days[k].updatedAt || 0)) { days[k] = d; n++; }
+      if (!days[k] || (d.updatedAt || 0) > (days[k].updatedAt || 0)) { days[k] = d; n++; replaced.add(k); }
     });
+    if (data.shots) restoreShots(data.shots, replaced);
     persist();
     if (data.palettes) { Object.assign(palSel, data.palettes); savePal(); }
     if (data.unlocks) { try { Object.entries(data.unlocks).forEach(([k, v]) => { if (k.startsWith("dailyplan.unlock.") && !localStorage.getItem(k)) localStorage.setItem(k, v); }); } catch (e) {} }
@@ -4915,7 +4960,10 @@
     buildDrum(); renderAll();
     return { n, gameBack };
   }
-  function mergeMsg(r) { return `已导入 ${r.n} 天的清单${r.gameBack ? "，星星、连胜、徽章和已解锁的主题也恢复了" : ""}。`; }
+  function mergeMsg(r) {
+    return (r.n ? `恢复好了：导入了 ${r.n} 天的清单` : "恢复好了：备份里的日子这台手机上都已经有了（同一天保留较新的那份）")
+      + (r.gameBack ? "，星星、连胜、徽章和已解锁的主题也回来了" : "") + "。\n\n手机上现有的记录一条都没删。去「全部清单」就能看到。";
+  }
   $("#btnBackup").addEventListener("click", doBackup);
   $("#btnRestore").addEventListener("click", () => $("#restoreFile").click());
   $("#restoreFile").addEventListener("change", (e) => {
@@ -6128,6 +6176,48 @@
       : due ? (ago === null ? "你还没有备份过。清浏览器数据、删掉主屏图标、换手机都会让记录消失，先备份一份吧。" : `已经 ${ago} 天没备份了，存一份新的吧。`) : "";
   }
   window.safeUI = safeUI;
+
+  /* ── 备份存在哪、怎么导回来：每台设备不一样，按设备讲 ── */
+  function bkWhere(b) {
+    const shared = b ? b.how === "share" : isMobile() && !!navigator.canShare;
+    if (shared && isIOS) return ["存在你刚才在分享面板里选的地方：", [
+      "选了<b>「存储到“文件”」</b>→ 在 iPhone 自带的<b>「文件」App</b> 里，你选的那个文件夹（一般是「我的 iPhone」或「iCloud 云盘」）。",
+      "选了<b>微信 → 文件传输助手</b> → 在微信的聊天记录里。",
+      "如果刚才点了取消，就没有存下来，再点一次「备份到文件」。"]];
+    if (shared) return ["存在你刚才在分享面板里选的地方：", [
+      "选了<b>微信 → 文件传输助手</b> → 在微信的聊天记录里。",
+      "选了<b>文件管理 / 保存到手机</b> → 手机自带的「文件管理」App 里你选的文件夹。",
+      "选了<b>网盘</b> → 在网盘里。",
+      "如果刚才点了取消，就没有存下来，再点一次「备份到文件」。"]];
+    if (isMobile()) return ["存在手机的<b>「下载」</b>文件夹里：", [
+      "打开手机自带的<b>「文件管理」</b>App →「下载 / Download」；浏览器菜单里的「下载内容」也能看到。"]];
+    return ["存在电脑的<b>「下载」</b>文件夹（Downloads）里。", []];
+  }
+  function bkRestoreSteps() {
+    const pick = isIOS ? "在弹出的选择里点「浏览」，进到你存的那个文件夹" : isMobile() ? "在弹出的文件选择里找到「下载」或你存的那个文件夹" : "在弹出的窗口里打开「下载」文件夹";
+    return [
+      "打开每日计划 → 底部<b>「我的」</b>→ 往下找到<b>「数据安全」</b>。",
+      "点<b>「从文件恢复」</b>。",
+      pick + "，选中<b>「每日计划备份_日期.json」</b>（有好几份就选日期最新的）。",
+      "看到「恢复好了」就完成了：清单、星星、徽章、已解锁的主题和通天塔里的成品卡都会回来。"];
+  }
+  const WX_TIP = "备份存在微信里的话：先在微信里点开这个文件 → 右上角「···」→「用其他应用打开」或「保存到手机」，先存进手机，再按上面的步骤选它。";
+  function bkHTML(b) {
+    const [lead, list] = bkWhere(b);
+    return (b ? `<div class="bk-file">${esc(b.name)}</div>` : "")
+      + `<div class="bk-sec">存在哪了</div><p class="bk-lead">${lead}</p>`
+      + (list.length ? `<ul class="bk-steps">${list.map((x) => `<li>${x}</li>`).join("")}</ul>` : "")
+      + `<div class="bk-sec">以后怎么导回来</div><ol class="bk-steps">${bkRestoreSteps().map((x) => `<li>${x}</li>`).join("")}</ol>`
+      + `<p class="bk-tip">${isMobile() ? WX_TIP + "<br>" : ""}恢复是「合并」：不会删掉手机上现有的记录，同一天保留较新的那份。换新手机也一样：先把每日计划添加到主屏幕，从主屏幕图标打开，再恢复。</p>`;
+  }
+  function bkShow(b) {
+    $("#bkBody").innerHTML = bkHTML(b);
+    const d = $("#bkDialog");
+    d.showModal ? d.showModal() : d.setAttribute("open", "");
+  }
+  $("#bkOk").addEventListener("click", () => { const d = $("#bkDialog"); d.close ? d.close() : d.removeAttribute("open"); });
+  $("#bkHelpBody").innerHTML = bkHTML(null)
+    + `<div class="bk-sec">「复制备份文字」存在哪</div><ol class="bk-steps"><li>点了以后，备份变成一大段文字放在剪贴板里，<b>这时还没存下来</b>。</li><li>马上粘贴到<b>备忘录</b>，或发给微信<b>文件传输助手</b>，才算存好。</li><li>导回来：在「数据安全」点<b>「粘贴恢复」</b>，把整段文字粘进去，点「恢复」。</li></ol><p class="bk-tip">文字备份只带清单和星星进度，不带通天塔的卡片图片；想连图片一起备份，用「备份到文件」。</p>`;
   $("#sfFile").addEventListener("click", async () => { await doBackup(); safeUI(); });
   $("#sfFromFile").addEventListener("click", () => $("#restoreFile").click());
   $("#sfCopy").addEventListener("click", async () => {
@@ -6140,7 +6230,7 @@
       document.body.appendChild(ta); ta.select(); try { ok = document.execCommand("copy"); } catch (e2) {} ta.remove();
     }
     if (!ok) { rollback(snap); alert("这个浏览器不让复制，请用「备份到文件」。"); return; }
-    alert("备份文字已复制。\n\n粘贴到「备忘录」，或发给微信「文件传输助手」存起来。\n以后在「我的 → 数据安全 → 粘贴恢复」里粘回来就能恢复。");
+    alert("备份文字已经复制到剪贴板，但还没存下来！\n\n现在就去粘贴到「备忘录」，或发给微信「文件传输助手」，才算存好。\n\n以后导回来：「我的 → 数据安全 → 粘贴恢复」，把整段文字粘进去点「恢复」。\n\n注意：文字备份不带通天塔的卡片图片，想连图片一起备份请用「备份到文件」。");
     safeUI();
   });
   const pd = $("#pasteDialog");
