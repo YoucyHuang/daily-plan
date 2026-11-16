@@ -11,7 +11,7 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 24   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 25   # 改了代码就加 1，手机上装好的版本会自动换新
 SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
@@ -87,9 +87,19 @@ self.addEventListener("activate", (e) => e.waitUntil(caches.keys()
 self.addEventListener("fetch", (e) => {{
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== self.location.origin) return;
   if (e.request.mode === "navigate") {{
-    /* no-cache：每次都向服务器确认有没有新版，不吃浏览器 10 分钟的 HTTP 缓存 */
-    e.respondWith(fetch(e.request, {{ cache: "no-cache" }}).then((r) => {{ const c = r.clone(); caches.open(CACHE).then((x) => x.put("./index.html", c)); return r; }})
-      .catch(() => caches.match("./index.html")));
+    /* 防卡：每次都向服务器要新版（no-cache），但最多等 3 秒。
+       国内访问 github.io 常常不是断开而是一直转圈：3 秒没回来，就先用手机里存的那份打开，
+       新版在后台继续下载、存好，下次打开就是新的。手机里还没存过（第一次打开）就只能等网络。 */
+    const net = fetch(e.request, {{ cache: "no-cache" }}).then((r) => {{
+      if (r.ok) {{ const c = r.clone(); return caches.open(CACHE).then((x) => x.put("./index.html", c)).then(() => r, () => r); }}
+      return r;
+    }});
+    e.waitUntil(net.catch(() => {{}}));
+    e.respondWith(caches.match("./index.html").then((saved) => {{
+      if (!saved) return net;
+      const late = new Promise((res) => setTimeout(() => res(saved), 3000));
+      return Promise.race([net.catch(() => saved), late]);
+    }}));
     return;
   }}
   /* 字体分片、主题图片用到一个存一个，下次断网也能显示 */
