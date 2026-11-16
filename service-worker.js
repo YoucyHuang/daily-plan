@@ -1,5 +1,5 @@
 /* 每日计划 · 离线缓存（build.py 生成） */
-const CACHE = "daily-plan-app-v22";
+const CACHE = "daily-plan-app-v23";
 const ASSETS = ["./", "./index.html", "./manifest.json", "html-to-image.js", "fonts/fonts.css", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys()
@@ -27,14 +27,18 @@ async function remindCheck() {
   const s = await r.json();
   if (!s.on) return;
   const now = new Date(), today = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`;
-  const [h, m] = String(s.time || "20:00").split(":").map(Number);
-  if (s.last === today || now.getHours() * 60 + now.getMinutes() < h * 60 + m) return;
+  // 每天可以有几个提醒时间（默认 12:00 和 20:00）：找今天已经过了的最晚那个，提醒过就不再提醒
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const passed = (s.times || [s.time || "20:00"]).filter((t) => { const [h, m] = String(t).split(":").map(Number); return h * 60 + m <= mins; }).sort();
+  if (!passed.length) return;
+  const slot = today + "@" + passed[passed.length - 1];
+  if (String(s.last || "") >= slot) return;
   const n = s.day === today ? s.pending : null;
   if (n === 0) return;
   const title = n === null ? "今天的清单还没写哦" : `还有 ${n} 件待办`;
   const body = s.streak ? `连胜 ${s.streak} 天了，别断在今天哦` : "小Y在等你回来打勾 ✦";
   await self.registration.showNotification(title, { body, icon: "icon-192.png", badge: "icon-192.png", tag: "remind" });
-  s.last = today;
+  s.last = slot;
   await c.put("./__remind.json", new Response(JSON.stringify(s), { headers: { "content-type": "application/json" } }));
 }
 self.addEventListener("periodicsync", (e) => { if (e.tag === "remind") e.waitUntil(remindCheck()); });

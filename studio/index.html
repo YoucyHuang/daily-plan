@@ -863,6 +863,18 @@
   .me-stats div { padding:12px 8px 10px; border-radius:16px; background:var(--surface); border:1.5px solid var(--rule); text-align:center; }
   .me-stats b { display:block; font-family:"Jost", var(--font-ui); font-size:24px; font-weight:700; line-height:1.1; color:var(--ink-1); font-variant-numeric:tabular-nums; }
   .me-stats small { font-size:11.5px; color:var(--ink-3); }
+  dialog.icon-warn h3 { margin:0 0 10px; font-size:19px; line-height:1.4; color:#c2410c; }
+  dialog.icon-warn p { margin:0; font-size:14.5px; line-height:1.75; color:var(--ink-1); }
+  dialog.icon-warn .dialog-actions .btn:first-child { background:#e0603a; border-color:#e0603a; color:#fff; }
+  .top-list { list-style:none; margin:8px 0 2px; padding:0; display:grid; gap:9px; }
+  .top-list li { display:grid; grid-template-columns:26px 1fr auto; align-items:center; gap:4px 10px; font-size:14px; color:var(--ink-1); }
+  .top-list .rk { grid-row:span 2; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--font-latin, sans-serif); background:var(--surface-2); border:1.5px solid var(--rule); }
+  .top-list li:first-child .rk { background:#ffc21a; border-color:#e8a400; color:#5a3b00; }
+  .top-list .tx { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+  .top-list .ct { font-size:12.5px; color:var(--ink-3); white-space:nowrap; }
+  .top-list .bar { grid-column:2 / -1; height:6px; border-radius:99px; background:var(--surface-2); overflow:hidden; }
+  .top-list .bar i { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg, #ffc21a, #ff8a1a); }
+  .top-empty { font-size:13px; color:var(--ink-3); line-height:1.6; }
   .me-emo { padding:10px 14px 12px; border-radius:16px; background:var(--surface); border:1.5px solid var(--rule); }
   .me-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
   .me-wrap .rm-btns .btn { padding:8px 6px; font-size:13.5px; white-space:nowrap; letter-spacing:0; }
@@ -1241,6 +1253,10 @@
           <div class="q-head"><span>小Y 的眼睛颜色</span><small>颜色就是心情</small></div>
           <div class="me-chips" id="meEmo"></div>
         </div>
+        <div class="me-emo me-top" id="meTop">
+          <div class="q-head"><span>你做得最多的事</span><small id="topState"></small></div>
+          <ol class="top-list" id="topList"></ol>
+        </div>
         <div class="me-emo me-safe" id="meSafe">
           <div class="q-head"><span>数据安全</span><small id="sfState"></small></div>
           <p class="sf-warn" id="sfWarn" hidden></p>
@@ -1267,13 +1283,14 @@
           </details>
         </div>
         <div class="me-emo me-remind">
-          <div class="q-head"><span>提醒</span><small id="rmState">没开</small></div>
-          <div class="rm-row"><span>每天几点叫我</span><input class="field rm-time" type="time" id="rmTime" value="20:00"></div>
+          <div class="q-head"><span>每日提醒</span><small id="rmState">没开</small></div>
+          <div class="rm-row"><span>中午提醒</span><input class="field rm-time" type="time" id="rmTime0" value="12:00"></div>
+          <div class="rm-row"><span>晚上提醒</span><input class="field rm-time" type="time" id="rmTime1" value="20:00"></div>
           <div class="rm-btns">
             <button class="btn primary" id="rmOn">开启提醒</button>
             <button class="btn" id="rmIcs">加到手机日历</button>
           </div>
-          <p class="chip rm-note" id="rmNote">到点还有没打勾的事，小Y会提醒你「还有 X 件待办」，App 图标上也会显示剩几件。</p>
+          <p class="chip rm-note" id="rmNote">默认每天 12:00 和 20:00，到点还有没打勾的事，小Y会提醒你「还有 X 件待办」，App 图标上也会显示剩几件。不想要可以关掉。</p>
         </div>
         <button class="btn" id="meBadgeWall">查看徽章墙</button>
       </div>
@@ -1338,6 +1355,11 @@
   </dialog>
   <div class="install-arrow" id="installArrow" hidden></div>
 
+  <dialog class="day-dialog icon-warn" id="iconWarn">
+    <h3 id="iwTitle"></h3>
+    <p id="iwText"></p>
+    <div class="dialog-actions"><button class="btn primary" id="iwOk"></button><button class="btn" id="iwBackup">先去备份</button></div>
+  </dialog>
   <dialog class="day-dialog" id="dayDialog">
     <div id="dayDialogCard"></div>
     <div class="dialog-actions">
@@ -4958,12 +4980,13 @@
     async set(key, val) {
       try {
         const db = await this.open();
-        await new Promise((res) => {
-          const tx = db.transaction("kv", "readwrite").objectStore("kv").put(val, key);
-          tx.onsuccess = () => { db.close(); res(); };
-          tx.onerror = () => { db.close(); res(); };
+        return await new Promise((res) => {
+          const tx = db.transaction("kv", "readwrite");
+          tx.objectStore("kv").put(val, key);
+          tx.oncomplete = () => { db.close(); res(true); };
+          tx.onerror = tx.onabort = () => { db.close(); res(false); };
         });
-      } catch (e) {}
+      } catch (e) { return false; }
     },
     async del(key) {
       try {
@@ -5165,9 +5188,21 @@
 
   /* 上传至人生通天塔：把今天这张存进「全部清单」，跳过去转到它 */
   /* 把现在制好的成品卡缩成 432×576 的 JPEG 存起来，通天塔里放的就是这张 */
+  /* 手机上（特别是 iPhone Safari）截图库第一次截常常失败或截出空白：最多试 3 次，
+     截出来太小（基本是空白）也算失败；存进 IndexedDB 后再读回来确认。全都不行就抛错，不放素卡进塔。 */
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
   async function captureShot(k) {
-    if (!window.htmlToImage) return;
-    const big = await makeBlob();
+    if (!window.htmlToImage) throw new Error("截图组件没加载");
+    const safari = /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|Android/.test(navigator.userAgent);
+    let big = null;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const b = await withTimeout(makeBlob(), 30000);
+        if (b && b.size > 40000) { big = b; if (!safari || i > 0) break; }   // Safari 第一张常缺图，再截一次用第二张
+      } catch (e) {}
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    if (!big) throw new Error("截图失败");
     const img = await new Promise((res, rej) => {
       const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(big);
     });
@@ -5178,10 +5213,12 @@
     cx.drawImage(img, 0, 0, cv.width, cv.height);
     URL.revokeObjectURL(img.src);
     const small = await new Promise((res) => cv.toBlob(res, "image/jpeg", 0.86));
-    if (!small) return;
-    await idb.set("shot:" + k, small);
+    if (!small) throw new Error("压缩失败");
+    let saved = false;
+    for (let i = 0; i < 2 && !saved; i++) saved = (await idb.set("shot:" + k, small)) && (await idb.get("shot:" + k)) instanceof Blob;
     if (shots[k]) URL.revokeObjectURL(shots[k]);
     shots[k] = URL.createObjectURL(small);
+    if (!saved) throw new Error("没存进手机");
   }
 
   $("#btnTower").addEventListener("click", async () => {
@@ -5194,8 +5231,13 @@
     $("#towerTip").textContent = "正在把成品卡放进通天塔…";
     saveDay();
     try { await captureShot(k); $("#towerTip").textContent = ""; }
-    catch (e) { $("#towerTip").textContent = "成品卡没截成，先放了清单版"; }
-    finally { btn.disabled = false; }
+    catch (e) {
+      /* 截不成就先不放进塔（不然塔里只有素卡），清单已经存好了，再点一次就行 */
+      btn.disabled = false;
+      $("#towerTip").textContent = "这次成品卡没截成功（" + (e && e.message || "未知原因") + "），清单已经存好了，再点一次「上传至人生通天塔」试试";
+      return;
+    }
+    btn.disabled = false;
     if (window.GAME) GAME.exported();
     days[k].towered = Date.now(); persist();
     nextCard(k);
@@ -5831,6 +5873,23 @@
     b.textContent = list[(Math.random() * list.length) | 0];
     b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
   }
+  /* 做得最多的事：所有记录里打了 ✓ 的事项，按文字合并计数，取前三 */
+  function topUI() {
+    const cnt = new Map();
+    let all = 0;
+    Object.values(days).forEach((d) => (d.items || []).forEach((x) => {
+      if (x.mark !== "check" || !x.text) return;
+      const t = String(x.text).replace(/\s+/g, " ").trim();
+      if (!t) return;
+      cnt.set(t, (cnt.get(t) || 0) + 1); all++;
+    }));
+    const top = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 3);
+    $("#topState").textContent = all ? `一共做完 ${all} 件` : "";
+    if (!top.length) { $("#topList").innerHTML = '<li class="top-empty">还没有打过勾。做完一件点一下 ✓，这里就会排出你最常做的三件事。</li>'; return; }
+    const max = top[0][1];
+    $("#topList").innerHTML = top.map(([t, n], i) =>
+      `<li><span class="rk">${i + 1}</span><span class="tx">${esc(t)}</span><span class="ct">做了 ${n} 次</span><span class="bar"><i style="width:${(n / max * 100).toFixed(1)}%"></i></span></li>`).join("");
+  }
   function me() {
     const s = streakInfo(), L2 = levelInfo();
     $("#meTitle").textContent = `Lv.${L2.lv} ${L2.title}`;
@@ -5842,6 +5901,7 @@
     $("#meDays").textContent = Object.keys(days).filter((k) => checksOf(k) > 0).length;
     $("#meBadgeN").textContent = Object.keys(G.badges).length;
     $("#meFreeze").textContent = G.freezes;
+    topUI();
     $("#meEmo").innerHTML = EYES.map((e) => `<button type="button" data-eye="${e[0]}" aria-pressed="${e[0] === eyePick}">${e[2] ? `<i style="background:${e[2]}"></i>` : ""}${e[1]}</button>`).join("");
     meSay(mood());
     yyLoad().then(() => { if (yy3d) { yy3d.setEye(eyeHex()); yy3d.start(); } });
@@ -5866,8 +5926,20 @@
      · 加到手机日历：每天准点的日历提醒，所有手机都准
      数据通过缓存里的一个小 JSON 交给 service worker，它读不到 localStorage。 */
   const RKEY = "dailyplan.remind.v1", RCACHE = "daily-plan-remind", RFILE = "./__remind.json";
-  const RM = (() => { const b = { on: false, time: "20:00", last: "", toast: "" }; try { return Object.assign(b, JSON.parse(localStorage.getItem(RKEY)) || {}); } catch (e) { return b; } })();
+  /* 默认开：每天 12:00 和 20:00 各提醒一次，「我的」里可以关、可以改时间。
+     last / toast 记的是「哪天@几点」那一次，同一次只提醒一回。
+     旧版存的是 { on:false, time:"20:00" }（默认关），一律换成新的默认。 */
+  const RM_TIMES = ["12:00", "20:00"];
+  const RM = (() => {
+    const b = { v: 2, on: true, times: RM_TIMES.slice(), last: "", toast: "" };
+    try {
+      const o = JSON.parse(localStorage.getItem(RKEY)) || {};
+      if (o.v === 2 && Array.isArray(o.times)) return Object.assign(b, o);
+    } catch (e) {}
+    return b;
+  })();
   const rsave = () => { try { localStorage.setItem(RKEY, JSON.stringify(RM)); } catch (e) {} };
+  rsave();
   const RICON = ($('link[rel="icon"]') || {}).href || "icon-192.png";
   const canNotify = "Notification" in window && "serviceWorker" in navigator;
   /* 今天还没做完的：空白 + 半对；打叉是「今日不做」，不算 */
@@ -5882,7 +5954,10 @@
     return { title: `还有 ${n} 件待办`, body: pick([s ? `连胜 ${s} 天了，别断在今天哦` : "打完勾，今天就变成一张好看的卡", `就差 ${n} 件，小Y在旁边给你加油 ✦`, "做一件也算数，先挑最小的那件"]) };
   }
   const minsNow = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
-  const minsAt = () => { const [h, m] = RM.time.split(":").map(Number); return h * 60 + m; };
+  const toMins = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+  const rmTimes = () => [...new Set(RM.times.filter((t) => /^\d{2}:\d{2}$/.test(t)))].sort();
+  /* 今天已经到点的最晚那一次（"2026-11-16@12:00"），还没到第一个点就是 null */
+  const passedSlot = () => { const p = rmTimes().filter((t) => toMins(t) <= minsNow()); return p.length ? TODAY() + "@" + p[p.length - 1] : null; };
   async function shared(write) {
     try {
       const c = await caches.open(RCACHE), r = await c.match(RFILE), old = r ? await r.json() : {};
@@ -5898,73 +5973,88 @@
       if (RM.on && navigator.setAppBadge) { n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); }
       else if (navigator.clearAppBadge) navigator.clearAppBadge();
     } catch (e) {}
-    await shared(() => ({ on: RM.on, time: RM.time, day: TODAY(), pending: n, streak: streakInfo().streak, last: RM.last }));
+    await shared(() => ({ on: RM.on, times: rmTimes(), day: TODAY(), pending: n, streak: streakInfo().streak, last: RM.last }));
     clearTimeout(rmTimer);
     if (!RM.on) return;
-    const wait = (minsAt() - minsNow()) * 60000 - new Date().getSeconds() * 1000;
-    if (wait > 0 && wait < 864e5) rmTimer = setTimeout(remindFire, wait + 500);
-    else if (wait <= 0) remindFire(true);
+    /* 定时到今天下一个提醒点；已经过了的那个点，打开 App 时由小Y说一句 */
+    const next = rmTimes().map(toMins).find((x) => x > minsNow());
+    if (next !== undefined) rmTimer = setTimeout(remindFire, (next - minsNow()) * 60000 - new Date().getSeconds() * 1000 + 500);
+    if (passedSlot()) remindFire(true);
   }
   async function remindFire(late) {
-    const t = TODAY(), n = pendingToday();
+    const slot = passedSlot(), n = pendingToday();
     await shared();
-    if (!RM.on || n === 0) return;
+    if (!RM.on || !slot || n === 0) return;
     if (document.visibilityState === "visible") {
-      if (RM.toast === t) return;   // 人就在 App 里：小Y说一句，不弹系统通知
-      RM.toast = t; rsave();
+      if (RM.toast >= slot) return;   // 人就在 App 里：小Y说一句，不弹系统通知
+      RM.toast = slot; rsave();
       const m = remindMsg(n); toast("🔔", m.title, m.body);
       return;
     }
-    if (RM.last === t || late) return;
-    RM.last = t; rsave(); shared(() => ({ on: RM.on, time: RM.time, day: t, pending: n, streak: streakInfo().streak, last: t }));
+    if (RM.last >= slot || late) return;
+    RM.last = slot; rsave(); shared(() => ({ on: RM.on, times: rmTimes(), day: TODAY(), pending: n, streak: streakInfo().streak, last: slot }));
     try { const reg = await navigator.serviceWorker.ready, m = remindMsg(n); reg.showNotification(m.title, { body: m.body, icon: RICON, badge: RICON, tag: "remind" }); } catch (e) {}
   }
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") remindSync(); });
 
+  const rmLabel = () => rmTimes().join(" 和 ");
   function remindUI() {
-    $("#rmTime").value = RM.time;
-    $("#rmState").textContent = RM.on ? `每天 ${RM.time}` : "没开";
+    $("#rmTime0").value = RM.times[0] || "12:00";
+    $("#rmTime1").value = RM.times[1] || "20:00";
+    $("#rmState").textContent = RM.on ? `每天 ${rmLabel()}` : "已关闭";
     $("#rmState").classList.toggle("on", RM.on);
     $("#rmOn").textContent = RM.on ? "关闭提醒" : "开启提醒";
     $("#rmOn").classList.toggle("primary", !RM.on);
   }
   const rmNote = (t) => { $("#rmNote").textContent = t; };
-  $("#rmTime").addEventListener("change", (e) => {
+  ["#rmTime0", "#rmTime1"].forEach((sel, i) => $(sel).addEventListener("change", (e) => {
     if (!/^\d{2}:\d{2}$/.test(e.target.value)) return;
-    RM.time = e.target.value; RM.last = RM.toast = ""; rsave(); remindUI(); remindSync();
-  });
-  $("#rmOn").addEventListener("click", async () => {
-    if (RM.on) { RM.on = false; rsave(); remindUI(); remindSync(); rmNote("提醒已关闭。"); return; }
-    if (isIOS && !standalone) { rmNote("iPhone 要先把每日计划「添加到主屏幕」，再从主屏幕图标打开，才能开提醒。也可以先用「加到手机日历」。"); return; }
-    if (!canNotify) { rmNote("这个浏览器不支持通知，用「加到手机日历」也能每天准点提醒。"); return; }
+    RM.times[i] = e.target.value; RM.last = RM.toast = ""; rsave(); remindUI(); remindSync();
+  }));
+  /* 系统通知要用户点一下才能申请权限：提醒默认开着，就在第一次点屏幕时顺手申请一次（只问一次） */
+  async function askNotify(loud) {
+    if (isIOS && !standalone) { if (loud) rmNote("iPhone 要先把每日计划「添加到主屏幕」，再从主屏幕图标打开，才能收到通知。App 开着时小Y照样会提醒；也可以用「加到手机日历」。"); return false; }
+    if (!canNotify) { if (loud) rmNote("这个浏览器不支持通知。App 开着时小Y照样会提醒；想准点就用「加到手机日历」。"); return false; }
     let p = Notification.permission;
     if (p === "default") { try { p = await Notification.requestPermission(); } catch (e) {} }
-    if (p !== "granted") { rmNote("通知权限被关掉了。到手机「设置」里给这个 App（或浏览器）打开通知，再回来点一次。"); return; }
-    RM.on = true; RM.last = RM.toast = ""; rsave(); remindUI();
+    if (p !== "granted") { if (loud) rmNote("通知权限被关掉了。到手机「设置」里给这个 App（或浏览器）打开通知。App 开着时小Y照样会提醒。"); return false; }
     try {
       const reg = await navigator.serviceWorker.ready;
       if ("periodicSync" in reg) await reg.periodicSync.register("remind", { minInterval: 60 * 60 * 1000 });
     } catch (e) {}
-    remindSync();
-    const n = pendingToday();
-    try { const reg = await navigator.serviceWorker.ready; reg.showNotification("提醒开好啦 ✦", { body: `每天 ${RM.time}，还有没打勾的事小Y就叫你${n ? `（现在还有 ${n} 件待办）` : ""}`, icon: RICON, tag: "remind" }); } catch (e) {}
-    rmNote(`开好了：每天 ${RM.time} 提醒，图标上会显示还剩几件。手机关掉 App 以后通知可能晚到，想要准点就再点「加到手机日历」。`);
+    return true;
+  }
+  const ASKED_KEY = "dailyplan.notifyAsked";
+  document.addEventListener("click", function once() {
+    let asked = false;
+    try { asked = localStorage.getItem(ASKED_KEY) === "1"; } catch (e) {}
+    if (asked || !RM.on || !canNotify || Notification.permission !== "default" || (isIOS && !standalone)) { document.removeEventListener("click", once, true); return; }
+    try { localStorage.setItem(ASKED_KEY, "1"); } catch (e) {}
+    document.removeEventListener("click", once, true);
+    askNotify(false);
+  }, true);
+  $("#rmOn").addEventListener("click", async () => {
+    if (RM.on) { RM.on = false; rsave(); remindUI(); remindSync(); rmNote("提醒已关闭，想要了再点「开启提醒」。"); return; }
+    RM.on = true; RM.last = RM.toast = ""; rsave(); remindUI(); remindSync();
+    const ok = await askNotify(true);
+    if (ok) rmNote(`开好了：每天 ${rmLabel()} 提醒，图标上会显示还剩几件。手机关掉 App 以后通知可能晚到，想要准点就再点「加到手机日历」。`);
   });
   $("#rmIcs").addEventListener("click", () => {
-    const d = new Date(), [h, m] = RM.time.split(":");
+    const d = new Date();
     const day = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}`;
     const stamp = d.toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
     const url = location.origin + location.pathname + "#today";
-    const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//daily-plan//CN", "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
-      "UID:dailyplan-remind-" + day + "@youcyhuang.github.io", "DTSTAMP:" + stamp, `DTSTART:${day}T${h}${m}00`, "DURATION:PT10M", "RRULE:FREQ=DAILY",
-      "SUMMARY:小Y：今天的清单打完勾了吗？", "DESCRIPTION:打开每日计划，看看还有几件待办 ✦\\n" + url, "URL:" + url,
-      "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:还有待办没打勾哦", "TRIGGER:PT0S", "END:VALARM", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+    const ev = rmTimes().flatMap((t) => { const [h, m] = t.split(":"); return ["BEGIN:VEVENT",
+      `UID:dailyplan-remind-${day}-${h}${m}@youcyhuang.github.io`, "DTSTAMP:" + stamp, `DTSTART:${day}T${h}${m}00`, "DURATION:PT10M", "RRULE:FREQ=DAILY",
+      "SUMMARY:小Y：今天的清单打完勾了吗？", "DESCRIPTION:打开每日计划，看看还有几件待办 ✦\n" + url, "URL:" + url,
+      "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:还有待办没打勾哦", "TRIGGER:PT0S", "END:VALARM", "END:VEVENT"]; });
+    const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//daily-plan//CN", "CALSCALE:GREGORIAN", ...ev, "END:VCALENDAR"].join("\r\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
     a.download = "每日计划提醒.ics";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    rmNote(`打开下载的「每日计划提醒.ics」，选「添加到日历」，以后每天 ${RM.time} 日历会准点提醒。要改时间就先在日历里删掉旧的，再加一次。`);
+    rmNote(`打开下载的「每日计划提醒.ics」，选「添加到日历」，以后每天 ${rmLabel()} 日历会准点提醒。要改时间就先在日历里删掉旧的，再加一次。`);
   });
   window.REMIND = { sync: remindSync };
 
@@ -6082,7 +6172,46 @@
     try { localStorage.setItem(TOUR_KEY, "1"); } catch (e) {}
     const d = $("#tourDialog");
     d.close ? d.close() : d.removeAttribute("open");
+    setTimeout(iconWarn, 300);
   });
+
+  /* ───────────────── 删主屏幕图标会清空记录：提醒两遍 ─────────────────
+     网页拦不住用户在手机桌面上删图标（系统不会通知网页），所以在「从主屏幕图标打开」的第一次就讲清楚，
+     要连点两次确认才能关掉；记录被清空后重新装上，会再提醒一遍。 */
+  const IW_KEY = "dailyplan.iconWarned";
+  const IW = [
+    ["⚠️ 删掉主屏幕图标 = 删掉所有记录",
+     "你的清单、星星、连胜和人生通天塔，都只存在这个图标里，不上传。在手机桌面上删掉「每日计划」图标，所有记录会一起被清空，找不回来。",
+     "我知道了（1/2）"],
+    ["再确认一次：删图标前先备份",
+     "以后真要删图标或换手机，请先到「我的 → 数据安全」点「备份到文件」或「复制备份文字」。没有备份就删掉图标，记录就没了。",
+     "我记住了（2/2）"],
+  ];
+  let iwStep = 0;
+  function iwShow() {
+    const [t, x, b] = IW[iwStep];
+    $("#iwTitle").textContent = t; $("#iwText").textContent = x; $("#iwOk").textContent = b;
+    const d = $("#iconWarn");
+    if (!d.open) d.showModal ? d.showModal() : d.setAttribute("open", "");
+  }
+  function iwClose() { const d = $("#iconWarn"); d.close ? d.close() : d.removeAttribute("open"); }
+  function iconWarn(force) {
+    if (!force) {
+      if (!standalone || new URLSearchParams(location.search).has("solo")) return;
+      try { if (localStorage.getItem(IW_KEY) === "1") return; } catch (e) {}
+      if (document.querySelector("dialog[open]")) return;   // 别的弹窗开着（比如引导），等它关了再说
+    }
+    iwStep = 0; iwShow();
+  }
+  $("#iwOk").addEventListener("click", () => {
+    if (iwStep === 0) { iwStep = 1; iwShow(); return; }
+    try { localStorage.setItem(IW_KEY, "1"); } catch (e) {}
+    iwClose();
+  });
+  $("#iwBackup").addEventListener("click", () => { iwClose(); location.hash = "#me"; setTimeout(() => { const el = $("#meSafe"); if (el) el.scrollIntoView({ block: "center" }); }, 300); });
+  $("#iconWarn").addEventListener("cancel", (e) => e.preventDefault());   // 不能按返回键直接关掉
+  setTimeout(() => iconWarn(), 1500);
+  window.iconWarn = iconWarn;
   $("#trialUnlock").addEventListener("click", () => { try { sessionStorage.clear(); } catch (e) {} location.reload(); });
   /* 已经解锁过的老用户第一次看到新版，也给一次引导 */
   try { if (PRODUCT.free || KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY))) setTimeout(showTour, 700); } catch (e) {}
