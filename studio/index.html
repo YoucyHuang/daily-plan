@@ -1325,11 +1325,11 @@
   <dialog class="day-dialog unlock-dialog" id="unlockDialog">
     <img id="unPreview" alt="">
     <h3>解锁「<span id="unName"></span>」</h3>
-    <p class="un-sub">每个主题都带 7 套配色。攒够 <span id="unCost2">10000</span> 颗星星就能免费换；不想等，花 1 元买一把星星密钥，马上解锁。</p>
+    <p class="un-sub">每个主题都带 7 套配色。攒够 <span id="unCost2">10000</span> 颗星星就能免费换；不想等，在小红书店铺花 1 元买这款皮肤，点发货消息里的链接就解锁；也可以把那条链接粘贴到下面。</p>
     <button class="btn primary big" id="unBuy">用 <span id="unCost">10000</span> 星解锁</button>
     <div class="un-gap" id="unGap"></div>
     <div class="un-or">或</div>
-    <div class="un-code"><input class="field" id="unCode" placeholder="输入星星密钥" autocomplete="off" autocapitalize="characters"><button class="btn" id="unRedeem">兑换</button></div>
+    <div class="un-code"><input class="field" id="unCode" placeholder="粘贴发货链接或密钥" autocomplete="off" autocapitalize="characters"><button class="btn" id="unRedeem">兑换</button></div>
     <div class="un-err" id="unErr"></div>
     <div class="dialog-actions"><button class="btn" id="unClose">先不了</button></div>
   </dialog>
@@ -1740,10 +1740,12 @@
     renderAll();
     if (window.GAME) GAME.quest("add");
   });
-  /* 全部清空：删掉今天所有事项；重置：日期回到今天，事项留着、勾和叉清掉（像刚打开一样） */
+  /* 全部清空：删掉今天所有事项，换成 5 件照顾自己的基础小事（不留一张空白清单）；
+     重置：日期回到今天，事项留着、勾和叉清掉（像刚打开一样） */
+  const BASIC_ITEMS = ["喝 1.5L 水", "睡够 8 小时", "好好吃一顿饭", "出门晒 10 分钟太阳", "做一件让自己开心的小事"];
   $("#tClearAll").addEventListener("click", () => {
-    if (!items.length || !confirm("把今天的事项全部删掉？")) return;
-    items = [];
+    if (!items.length || !confirm("把今天的事项全部删掉？\n\n清空后会换成 5 件照顾自己的基础小事，可以再改。")) return;
+    setItems(BASIC_ITEMS.map((text) => ({ text, mark: "empty" })));
     saveDay();
     renderAll();
   });
@@ -5421,6 +5423,17 @@
   const UNLOCK_KEY = "dailyplan.unlock." + PRODUCT.slug;
   let TRIAL = false;
   const KEY_HASHES = PRODUCT.hashes || [PRODUCT.hash];
+  /* 小红书自动发货的是一条固定链接 …/daily-plan/?k=钥匙。也接受把整条链接粘贴进输入框。 */
+  const cleanKey = (t) => {
+    const m = String(t || "").match(/[?&#]k=([A-Za-z0-9-]+)/);
+    return (m ? m[1] : String(t || "")).trim().toUpperCase().replace(/[\s"'“”「」:：]+/g, "");
+  };
+  const URL_KEY = cleanKey(new URLSearchParams(location.search).get("k") || "");
+  /* 处理完就把钥匙从地址栏抹掉，免得截图、分享时带出去 */
+  function dropUrlKey() {
+    if (!URL_KEY) return;
+    try { const u = new URL(location.href); u.searchParams.delete("k"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
+  }
   async function sha256(t) {
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
     return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -5430,6 +5443,7 @@
     let ok = false;
     try { ok = KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY)); } catch (e) {}
     if (ok) return;
+    const isApp = PRODUCT.slug === "app";
     const ui = LOCK_UI[CLASSIC.includes(DEFAULT_THEME) ? "forest" : DEFAULT_THEME] || LOCK_UI.forest;
     const el = document.createElement("div");
     el.className = "lock";
@@ -5438,8 +5452,8 @@
       <div class="lock-mark" style="${ui.mark}">Y</div>
       <div class="lock-name" style="${ui.sub}">${esc(PRODUCT.name)}</div>
       <h2 style="${ui.title}">进入Y世界的钥匙🔑</h2>
-      <p style="${ui.sub}">输入你收到的星星密钥，输对一次，这台设备以后都不用再输。</p>
-      <input class="field" name="code" autocomplete="off" autocapitalize="characters" placeholder="输入星星密钥" required style="${ui.input}">
+      <p style="${ui.sub}">${isApp ? "在小红书店铺买「每日清单」后，点发货消息里的链接就能直接打开。<br>从手机桌面图标打开、又被拦在这里的话：把那条链接整条复制，粘贴到下面。" : "输入你收到的星星密钥，输对一次，这台设备以后都不用再输。"}</p>
+      <input class="field" name="code" autocomplete="off" autocapitalize="characters" placeholder="${isApp ? "粘贴发货链接" : "输入星星密钥"}" required style="${ui.input}">
       <button class="btn" type="submit" style="${ui.btn}">打开大门</button><div class="lock-err" style="color:${ui.err}"></div>
       <button class="lock-trial" type="button" style="${ui.sub}">还没有密钥？先试试看 →</button></form>`;
     document.body.appendChild(el);
@@ -5460,16 +5474,28 @@
       document.body.classList.add("trial");
       showTour();
     });
+    async function tryKey(code) {
+      const h = await sha256(PRODUCT.slug + ":" + code);
+      if (!KEY_HASHES.includes(h)) return false;
+      try { localStorage.setItem(UNLOCK_KEY, h); } catch (e2) {}
+      el.remove();
+      showTour();
+      return true;
+    }
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const code = form.code.value.trim().toUpperCase().replace(/[\s"'“”「」:：]+/g, "");
-      const h = await sha256(PRODUCT.slug + ":" + code);
-      if (KEY_HASHES.includes(h)) {
-        try { localStorage.setItem(UNLOCK_KEY, h); } catch (e2) {}
-        el.remove();
-        showTour();
-      } else {
-        el.querySelector(".lock-err").textContent = "密钥不对，再核对一下收到的那串字母和数字。";
+      if (await tryKey(cleanKey(form.code.value))) return;
+      if (window.GAME && await GAME.redeemSkin(cleanKey(form.code.value), true))
+        el.querySelector(".lock-err").textContent = "这是皮肤的链接，皮肤已经存好了。还要先打开「每日清单」本体：粘贴买「每日清单」时收到的那条链接。";
+      else el.querySelector(".lock-err").textContent = isApp ? "这条链接打不开，确认一下是小红书发货消息里的完整链接。" : "密钥不对，再核对一下收到的那串字母和数字。";
+    });
+    /* 点发货链接进来：自动开门；如果点的是皮肤链接，皮肤会在后面自动存好，这里提示还要先买本体 */
+    if (URL_KEY) tryKey(URL_KEY).then(async (ok) => {
+      if (ok) return;
+      const codes = PRODUCT.codes || {};
+      for (const slug of Object.keys(codes)) if (codes[slug].includes(await sha256(slug + ":" + URL_KEY))) {
+        el.querySelector(".lock-err").textContent = "皮肤已经帮你存好了。还要先打开「每日清单」本体：点买「每日清单」时收到的那条链接。";
+        return;
       }
     });
   })();
@@ -5788,21 +5814,31 @@
     setTheme(t, true);
   }
   $("#unBuy").addEventListener("click", () => { if (G.stars < COST) return; G.stars -= COST; grant(wantTheme, `花了 ${COST} 星`); hud(); });
-  $("#unRedeem").addEventListener("click", async () => {
-    const code = $("#unCode").value.trim().toUpperCase().replace(/[\s"'“”「」:：]+/g, "");
-    if (!code) return;
+  /* 一把钥匙 / 一条链接只对应一款：逐款核对指纹，对上哪款就只解锁哪款 */
+  async function redeemSkin(code, quiet) {
+    if (!code) return false;
     const codes = PRODUCT.codes || {}, map = PRODUCT.themeOf || {};
     for (const slug of Object.keys(codes)) {
       const h = await sha256(slug + ":" + code);
-      if (codes[slug].includes(h)) {
-        try { localStorage.setItem("dailyplan.unlock." + slug, h); } catch (e) {}
-        (map[slug] || []).forEach((t) => { if (!G.owned.includes(t)) G.owned.push(t); });
-        grant(map[slug].includes(wantTheme) ? wantTheme : map[slug][0], "星星密钥兑换成功");
-        return;
-      }
+      if (!codes[slug].includes(h)) continue;
+      try { localStorage.setItem("dailyplan.unlock." + slug, h); } catch (e) {}
+      (map[slug] || []).forEach((t) => { if (!G.owned.includes(t)) G.owned.push(t); });
+      gsave(); decorateSwatches();
+      const t = (map[slug] || []).includes(wantTheme) ? wantTheme : (map[slug] || [])[0];
+      if (!quiet && t) grant(t, "皮肤解锁成功");
+      else if (t) toast(ICON.star, `解锁「${THEME_NAME[t] || t}」`, "皮肤已经放进你的主题里");
+      return true;
     }
-    $("#unErr").textContent = "这把密钥打不开，再核对一下字母和数字。";
+    return false;
+  }
+  $("#unRedeem").addEventListener("click", async () => {
+    const code = cleanKey($("#unCode").value);
+    if (!code) return;
+    if (await redeemSkin(code)) return;
+    $("#unErr").textContent = "这条链接 / 密钥打不开，确认一下是这款皮肤发货消息里的完整链接。";
   });
+  /* 点皮肤的发货链接进来：自动解锁那一款（App 本体的钥匙在上面的门里处理） */
+  if (URL_KEY) setTimeout(async () => { await redeemSkin(URL_KEY, true); dropUrlKey(); }, 400);
   $("#unClose").addEventListener("click", () => { const d = $("#unlockDialog"); d.close ? d.close() : d.removeAttribute("open"); });
   function decorateSwatches() {
     swatches.forEach((b) => {
@@ -5964,7 +6000,7 @@
   });
   $("#meBadgeWall").addEventListener("click", () => $("#hudBadges").click());
 
-  window.GAME = { onMark, quest, toast, badge, hud, swipeable, isOwned, askUnlock, decorateSwatches, exported, sealed, restore, rollback, sealCard, me, meStop, state: () => JSON.parse(JSON.stringify(G)) };
+  window.GAME = { onMark, quest, toast, badge, hud, swipeable, isOwned, askUnlock, decorateSwatches, exported, sealed, restore, rollback, sealCard, me, meStop, redeemSkin, state: () => JSON.parse(JSON.stringify(G)) };
   if (document.body.dataset.view === "me") me();
   autoFreeze(); decorateSwatches(); questsToday(); hud(); sealCard();
 
