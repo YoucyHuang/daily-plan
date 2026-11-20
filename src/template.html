@@ -866,6 +866,10 @@
   .bk-lead { margin:0 0 4px; font-size:14px; line-height:1.7; color:var(--ink-1); }
   .bk-steps { margin:0; padding-left:1.3em; font-size:14px; line-height:1.75; color:var(--ink-1); }
   .bk-tip { margin:10px 0 0; font-size:12.5px; line-height:1.6; color:var(--ink-3); }
+  .skin-land { max-height:92vh; overflow:auto; }
+  .skin-land .sl-steps { margin:6px 0 12px; padding-left:1.3em; text-align:left; line-height:1.7; }
+  .skin-land .sl-or { margin:16px 0 4px; padding-top:12px; border-top:1px dashed currentColor; text-align:left; opacity:.85; }
+  .skin-land .sl-form { padding:0 !important; margin:0 !important; background:none !important; border:0 !important; box-shadow:none !important; width:auto !important; }
   .top-list { list-style:none; margin:8px 0 2px; padding:0; display:grid; gap:9px; }
   .top-list li { display:grid; grid-template-columns:26px 1fr auto; align-items:center; gap:4px 10px; font-size:14px; color:var(--ink-1); }
   .top-list .rk { grid-row:span 2; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--font-latin, sans-serif); background:var(--surface-2); border:1.5px solid var(--rule); }
@@ -941,6 +945,18 @@
   .fz-ico { flex:none; width:32px; height:32px; background:no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='3' y='5' width='18' height='14' rx='3' fill='%237ec8ff' stroke='%232a7fd4' stroke-width='1.2'/><path d='M12 8v8M8.5 10l7 4M15.5 10l-7 4' stroke='white' stroke-width='1.6' stroke-linecap='round'/></svg>"); }
   .unlock-dialog img { display:block; width:150px; aspect-ratio:3/4; object-fit:cover; margin:0 auto 12px; border-radius:6px; box-shadow:var(--shadow-lg); }
   .unlock-dialog { text-align:center; }
+  .un-price { display:flex; align-items:baseline; justify-content:center; gap:10px; margin:2px 0 10px; }
+  .un-price b { font-size:34px; font-weight:900; color:#FF4FA3; line-height:1; }
+  .un-price span { font-size:13px; color:var(--ink-2); }
+  .unlock-dialog .dialog-actions { gap:8px; }
+  /* 预览皮肤：只能看，清单和卡片都点不动，不能导出 / 上传 */
+  body.peeking #page, body.peeking #tList, body.peeking .t-add, body.peeking #btnTower, body.peeking #btnExport,
+  body.peeking #btnAdd, body.peeking #btnReset, body.peeking #tClearAll, body.peeking #tResetMarks { pointer-events:none; }
+  body.peeking #btnTower, body.peeking #btnExport { opacity:.4; }
+  body.peeking #preview { position:relative; }
+  .peek-badge { display:none; position:absolute; left:10px; top:10px; z-index:5; padding:6px 12px; border:0; border-radius:99px; cursor:pointer;
+    background:#FF4FA3; color:#fff; font:700 13px/1.2 inherit; box-shadow:0 6px 16px rgba(255,79,163,.4); }
+  body.peeking .peek-badge { display:block; }
   .un-sub { font-size:13px; color:var(--ink-2); line-height:1.6; margin-bottom:14px; }
   .unlock-dialog .btn.big:disabled { opacity:.5; cursor:not-allowed; }
   .un-or { font-size:12px; color:var(--ink-3); margin:10px 0; }
@@ -1179,6 +1195,7 @@
           <span class="chip" id="exportTip"></span>
         </div>
         <div class="preview" id="preview">
+          <button type="button" class="peek-badge" id="peekBadge">预览 · ¥1 解锁</button>
           <div class="stage" id="stage">
             <div class="page" id="page">
               <div class="base"></div>
@@ -1318,14 +1335,16 @@
   <dialog class="day-dialog unlock-dialog" id="unlockDialog">
     <img id="unPreview" alt="">
     <h3>解锁「<span id="unName"></span>」</h3>
-    <p class="un-sub">每个主题都带 7 套配色。攒够 <span id="unCost2">10000</span> 颗星星就能免费换；不想等，在小红书店铺花 1 元买这款皮肤，点发货消息里的链接就解锁；也可以把那条链接粘贴到下面。</p>
+    <div class="un-price"><b>¥1</b><span>解锁这款皮肤 · 7 种构图 · 永久可用</span></div>
+    <p class="un-sub">每个主题都带 7 套配色。攒够 <span id="unCost2">10000</span> 颗星星就能免费换；不想等，可以到小红书「ADHD乐园」主页的置顶笔记里获得这款皮肤，点发货消息里的链接就解锁；也可以把那条链接粘贴到下面。</p>
     <button class="btn primary big" id="unBuy">用 <span id="unCost">10000</span> 星解锁</button>
     <div class="un-gap" id="unGap"></div>
     <div class="un-or">或</div>
     <div class="un-code"><input class="field" id="unCode" placeholder="粘贴发货链接或密钥" autocomplete="off" autocapitalize="characters"><button class="btn" id="unRedeem">兑换</button></div>
     <div class="un-err" id="unErr"></div>
-    <div class="dialog-actions"><button class="btn" id="unClose">先不了</button></div>
+    <div class="dialog-actions"><button class="btn" id="unPeek">先看看长什么样</button><button class="btn" id="unClose">先不了</button></div>
   </dialog>
+
 
   <dialog class="day-dialog bk-dialog" id="bkDialog">
     <h3 id="bkTitle">备份好了 ✓</h3>
@@ -1447,6 +1466,7 @@
 
   /* 只有真的改动过才存，打开页面不会凭空多出一天 */
   function saveDay() {
+    if (document.body.classList.contains("peeking")) return;   // 预览皮肤时不存
     const k = currentKey();
     if (!k) return;
     const towered = days[k] && days[k].towered;
@@ -1508,6 +1528,7 @@
   const swatches = document.querySelectorAll(".swatch");
   const isDesigned = () => DESIGNED.includes(document.body.dataset.theme);
   function setTheme(name, save) {
+    if (save && window.PEEK) PEEK.drop();
     document.body.dataset.theme = name;
     swatches.forEach((x) => x.classList.toggle("active", x.dataset.setTheme === name || (x.dataset.setTheme === "classic" && CLASSIC.includes(name))));
     if (CLASSIC.includes(name)) { palSel.classic = CLASSIC.indexOf(name); }
@@ -2944,7 +2965,7 @@
     if (TRIAL) {
       wm = document.createElement("div");
       wm.className = "trial-mark";
-      wm.innerHTML = `<div class="trial-grid">${"<span>试用 · Y世界</span>".repeat(42)}</div><div class="trial-strip">试用版 · 购买后输入星星密钥即可去掉水印</div>`;
+      wm.innerHTML = `<div class="trial-grid">${"<span>试用 · Y世界</span>".repeat(42)}</div><div class="trial-strip">试用版 · 获得「每日清单」后就没有水印啦</div>`;
       page.appendChild(wm);
     }
     try {
@@ -3163,7 +3184,7 @@
   $("#installClose").addEventListener("click", closeInstall);
   $("#installDialog").addEventListener("close", () => { $("#installArrow").hidden = true; });
   $("#installCopy").addEventListener("click", async () => {
-    const url = location.origin + location.pathname;
+    const url = URL_KEY ? keyLink(URL_KEY) : location.origin + location.pathname;
     try { await navigator.clipboard.writeText(url); $("#installCopy").textContent = "已复制 ✓"; }
     catch (e) { prompt("长按复制这个网址：", url); }
   });
@@ -3206,6 +3227,10 @@
      每款可以有很多把钥匙（平台卡密自动发货时一单一把）。网页里只存每把「款名:钥匙」的 SHA-256 摘要。
      输对一次就记在这台设备上，以后不用再输。 */
   const UNLOCK_KEY = "dailyplan.unlock." + PRODUCT.slug;
+  /* 开过一次门就一直开着：以后换新链接（旧链接作废）也不会把已经买过的人关在门外。
+     记号也以 dailyplan.unlock. 开头，备份文件会带上，换手机恢复后照样能用。 */
+  const OPENED_KEY = UNLOCK_KEY + ".opened";
+  const unlockedHere = () => { try { return KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY)) || localStorage.getItem(OPENED_KEY) === "1"; } catch (e) { return false; } };
   let TRIAL = false;
   const KEY_HASHES = PRODUCT.hashes || [PRODUCT.hash];
   /* 小红书自动发货的是一条固定链接 …/daily-plan/?k=钥匙。也接受把整条链接粘贴进输入框。 */
@@ -3214,10 +3239,13 @@
     return (m ? m[1] : String(t || "")).trim().toUpperCase().replace(/[\s"'“”「」:：]+/g, "");
   };
   const URL_KEY = cleanKey(new URLSearchParams(location.search).get("k") || "");
-  /* 处理完就把钥匙从地址栏抹掉，免得截图、分享时带出去 */
-  function dropUrlKey() {
-    if (!URL_KEY) return;
-    try { const u = new URL(location.href); u.searchParams.delete("k"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
+  /* 钥匙留在地址栏里：在小红书里点开后选「在浏览器打开」、或者添加到主屏幕，链接都要带着钥匙走 */
+  const keyLink = (k) => location.origin + location.pathname + "?k=" + k;
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+    const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand("copy"); } catch (e) {} ta.remove();
+    return ok;
   }
   async function sha256(t) {
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
@@ -3226,7 +3254,7 @@
   (function lock() {
     if (PRODUCT.free) return;   // 免费总版不需要钥匙
     let ok = false;
-    try { ok = KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY)); } catch (e) {}
+    ok = unlockedHere();
     if (ok) return;
     const isApp = PRODUCT.slug === "app";
     const ui = LOCK_UI[CLASSIC.includes(DEFAULT_THEME) ? "forest" : DEFAULT_THEME] || LOCK_UI.forest;
@@ -3237,8 +3265,8 @@
       <div class="lock-mark" style="${ui.mark}">Y</div>
       <div class="lock-name" style="${ui.sub}">${esc(PRODUCT.name)}</div>
       <h2 style="${ui.title}">进入Y世界的钥匙🔑</h2>
-      <p style="${ui.sub}">${isApp ? "在小红书店铺买「每日清单」后，点发货消息里的链接就能直接打开。<br>从手机桌面图标打开、又被拦在这里的话：把那条链接整条复制，粘贴到下面。" : "输入你收到的星星密钥，输对一次，这台设备以后都不用再输。"}</p>
-      <input class="field" name="code" autocomplete="off" autocapitalize="characters" placeholder="${isApp ? "粘贴发货链接" : "输入星星密钥"}" required style="${ui.input}">
+      <p style="${ui.sub}">${isApp ? "在小红书「ADHD乐园」主页的置顶笔记里获得「每日清单」后，点发货消息里的链接就能直接打开。<br>从手机桌面图标打开、又被拦在这里的话：把那条链接整条复制，粘贴到下面。" : "输入你收到的星星密钥，输对一次，这台设备以后都不用再输。"}</p>
+      <input class="field" name="code" autocomplete="off" autocapitalize="characters" placeholder="${isApp ? "粘贴发货链接" : "输入星星密钥"}" style="${ui.input}">
       <button class="btn" type="submit" style="${ui.btn}">打开大门</button><div class="lock-err" style="color:${ui.err}"></div>
       <button class="lock-trial" type="button" style="${ui.sub}">还没有密钥？先试试看 →</button></form>`;
     document.body.appendChild(el);
@@ -3260,29 +3288,58 @@
       showTour();
     });
     async function tryKey(code) {
+      if (!code) return false;
       const h = await sha256(PRODUCT.slug + ":" + code);
       if (!KEY_HASHES.includes(h)) return false;
-      try { localStorage.setItem(UNLOCK_KEY, h); } catch (e2) {}
+      try { localStorage.setItem(UNLOCK_KEY, h); localStorage.setItem(OPENED_KEY, "1"); } catch (e2) {}
       el.remove();
       showTour();
+      /* 在浏览器里开的门：顺手引导把小Y 放到手机桌面（引导弹窗开着就等它关了再弹） */
+      if (!standalone) setTimeout(() => { if (document.querySelector("#tourDialog[open]")) window.__askInstall = true; else showInstallGuide(); }, 800);
       return true;
     }
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const err = el.querySelector(".lock-err");
+      if (!cleanKey(form.code.value)) { err.textContent = isApp ? "先把小红书发货消息里的那条链接，整条粘贴到上面的框里。" : "先输入密钥。"; form.code.focus(); return; }
       if (await tryKey(cleanKey(form.code.value))) return;
       if (window.GAME && await GAME.redeemSkin(cleanKey(form.code.value), true))
-        el.querySelector(".lock-err").textContent = "这是皮肤的链接，皮肤已经存好了。还要先打开「每日清单」本体：粘贴买「每日清单」时收到的那条链接。";
+        el.querySelector(".lock-err").textContent = "这是皮肤的链接，皮肤已经存好了。还要先打开「每日清单」本体：粘贴获得「每日清单」时收到的那条链接。";
       else el.querySelector(".lock-err").textContent = isApp ? "这条链接打不开，确认一下是小红书发货消息里的完整链接。" : "密钥不对，再核对一下收到的那串字母和数字。";
     });
     /* 点发货链接进来：自动开门；如果点的是皮肤链接，皮肤会在后面自动存好，这里提示还要先买本体 */
     if (URL_KEY) tryKey(URL_KEY).then(async (ok) => {
       if (ok) return;
-      const codes = PRODUCT.codes || {};
+      const codes = PRODUCT.codes || {}, map = PRODUCT.themeOf || {};
       for (const slug of Object.keys(codes)) if (codes[slug].includes(await sha256(slug + ":" + URL_KEY))) {
-        el.querySelector(".lock-err").textContent = "皮肤已经帮你存好了。还要先打开「每日清单」本体：点买「每日清单」时收到的那条链接。";
+        skinLanding(slug, (map[slug] || [])[0]);
         return;
       }
     });
+    /* 皮肤落地页：iPhone 上桌面图标和 Safari 是分开存的，皮肤要到桌面图标里粘贴一次 */
+    function skinLanding(slug, t) {
+      const NAMES = { y2k: "Y2K 千禧", bauhaus: "包豪斯", songyuan: "宋人花鸟", business: "机芯", autumn: "涟漪", comic: "波普网点", guai: "鬼怪", lwf: "怪朋友" };
+      const nm = NAMES[t] || "这款";
+      const box = document.createElement("div");
+      box.className = "lock-box skin-land";
+      box.setAttribute("style", ui.panel);
+      box.innerHTML = `<div class="lock-mark" style="${ui.mark}">✓</div>
+        <h2 style="${ui.title}">「${nm}」皮肤已收好</h2>
+        <p style="${ui.sub}"><b>平时从手机桌面的「每日计划」图标打开？</b>按这 3 步：</p>
+        <ol class="sl-steps" style="${ui.sub}"><li>点下面「复制皮肤链接」</li><li>打开手机桌面上的「每日计划」</li><li>「制作卡片 → 主题」里点「${nm}」，把链接粘贴进去，点「兑换」</li></ol>
+        <button class="btn" type="button" data-copy style="${ui.btn}">复制皮肤链接</button>
+        <div class="sl-or" style="${ui.sub}">平时就在这个浏览器里用？把获得「每日清单」时收到的链接粘贴到下面：</div>`;
+      form.parentNode.insertBefore(box, form);
+      box.appendChild(form);
+      form.classList.add("sl-form");
+      form.querySelector("h2").remove(); form.querySelector("p").remove();
+      form.querySelector(".lock-mark").remove(); form.querySelector(".lock-name").remove();
+      form.querySelector(".lock-trial").textContent = "还没有「每日清单」？皮肤要配合每日清单用，可以先到「ADHD乐园」主页置顶笔记里获得 · 或先试试看 →";
+      box.querySelector("[data-copy]").addEventListener("click", async (e) => {
+        const ok = await copyText(keyLink(URL_KEY));
+        e.target.textContent = ok ? "已复制 ✓ 去桌面图标里粘贴" : "复制不了，请长按地址栏复制";
+      });
+    }
   })();
 
   /* ═════════════════ 游戏化：连胜 · 星星 · 等级 · 小Y · 每日任务 · 徽章 · 周报 · 解锁主题 ═════════════════
@@ -3569,7 +3626,7 @@
     li.addEventListener("pointerup", end); li.addEventListener("pointercancel", end);
   }
 
-  /* ── 主题解锁：经典款 + 怪朋友免费，其他用星星换，或输入已购买的星星密钥 ── */
+  /* ── 主题解锁：经典、怪朋友、机芯、波普网点免费（PRODUCT.freeThemes），其他用星星换，或粘贴已购买的链接 / 密钥 ── */
   const FREE_THEMES = PRODUCT.freeThemes || THEMES;
   const COST = PRODUCT.cost || 10000;
   const costTag = COST >= 10000 ? COST / 10000 + "万" : String(COST);
@@ -3592,6 +3649,7 @@
     const d = $("#unlockDialog"); d.showModal ? d.showModal() : d.setAttribute("open", "");
   }
   function grant(t, how) {
+    peekDrop();
     if (!G.owned.includes(t)) G.owned.push(t);
     gsave(); decorateSwatches();
     const d = $("#unlockDialog"); d.close ? d.close() : d.removeAttribute("open");
@@ -3623,8 +3681,37 @@
     $("#unErr").textContent = "这条链接 / 密钥打不开，确认一下是这款皮肤发货消息里的完整链接。";
   });
   /* 点皮肤的发货链接进来：自动解锁那一款（App 本体的钥匙在上面的门里处理） */
-  if (URL_KEY) setTimeout(async () => { await redeemSkin(URL_KEY, true); dropUrlKey(); }, 400);
-  $("#unClose").addEventListener("click", () => { const d = $("#unlockDialog"); d.close ? d.close() : d.removeAttribute("open"); });
+  if (URL_KEY) setTimeout(() => redeemSkin(URL_KEY, true), 400);
+  $("#unClose").addEventListener("click", () => { const d = $("#unlockDialog"); d.close ? d.close() : d.removeAttribute("open"); if (window.PEEK && PEEK.on()) PEEK.exit(); });
+  /* 先看看长什么样：用这款皮肤预览卡片，只能看不能用；退出后回到原来的主题 */
+  let peekFrom = null, peekTheme = null;
+  function peekDrop() {
+    if (!peekFrom) return;
+    document.body.classList.remove("peeking");
+    peekFrom = null; peekTheme = null;
+  }
+  function peekStart(t) {
+    const d = $("#unlockDialog"); d.close ? d.close() : d.removeAttribute("open");
+    if (!peekFrom) peekFrom = { theme: document.body.dataset.theme };
+    peekTheme = t;
+    document.body.classList.add("peeking");
+    setTheme(t, false);
+    renderAll(); fit();
+    if (location.hash.slice(1) !== "today" && location.hash) location.hash = "#today";
+    setTimeout(goStudio, 60);
+  }
+  function peekExit() {
+    if (!peekFrom) return;
+    const back = peekFrom.theme;
+    peekDrop();
+    setTheme(isOwned(back) ? back : DEFAULT_THEME, false);
+    renderAll(); fit();
+  }
+  $("#unPeek").addEventListener("click", () => peekStart(wantTheme));
+  /* 卡片左上角的「预览 · ¥1 解锁」：点了再打开解锁框；框里点「先不了」就退出预览 */
+  $("#peekBadge").addEventListener("click", () => askUnlock(peekTheme));
+  window.addEventListener("hashchange", () => { if (peekFrom && location.hash.slice(1) !== "today") peekExit(); });
+  window.PEEK = { drop: peekDrop, exit: peekExit, on: () => !!peekFrom };
   function decorateSwatches() {
     swatches.forEach((b) => {
       const t = b.dataset.setTheme, lock = !isOwned(t);
@@ -4083,6 +4170,7 @@
     try { localStorage.setItem(TOUR_KEY, "1"); } catch (e) {}
     const d = $("#tourDialog");
     d.close ? d.close() : d.removeAttribute("open");
+    if (window.__askInstall && !standalone) { window.__askInstall = false; setTimeout(showInstallGuide, 300); return; }
     setTimeout(iconWarn, 300);
   });
 
@@ -4125,7 +4213,7 @@
   window.iconWarn = iconWarn;
   $("#trialUnlock").addEventListener("click", () => { try { sessionStorage.clear(); } catch (e) {} location.reload(); });
   /* 已经解锁过的老用户第一次看到新版，也给一次引导 */
-  try { if (PRODUCT.free || KEY_HASHES.includes(localStorage.getItem(UNLOCK_KEY))) setTimeout(showTour, 700); } catch (e) {}
+  if (PRODUCT.free || unlockedHere()) setTimeout(showTour, 700);
 
   /* 注册 Service Worker（离线缓存 / 可安装） */
   if ("serviceWorker" in navigator) {

@@ -11,7 +11,7 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 26   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 32   # 改了代码就加 1，手机上装好的版本会自动换新
 SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
@@ -25,12 +25,12 @@ TPL = TPL.replace("  function renderLayout() {", "".join(
 STUDIO = next(p for p in PRODUCTS if p["slug"] == "studio")
 SHOP = [p for p in PRODUCTS if p["slug"] != "studio"]
 ALL = ["forest", "ocean", "morandi", "paper", "night", "lwf", "y2k", "bauhaus", "songyuan", "business", "autumn", "comic", "guai"]
-FREE = ["forest", "ocean", "morandi", "paper", "night", "lwf"]
+FREE = ["forest", "ocean", "morandi", "paper", "night", "lwf", "business", "comic"]   # 机芯、波普网点 11/20 起免费
 
 APP = {
     "slug": "app", "name": "每日计划 · Y世界", "short": "Y世界计划",
     "tagline": "像做游戏一样过每一天：打勾得星星、攒连胜、做任务、收集徽章，一键生成小红书卡片。",
-    # 每日清单 1.99 元：App 本体要钥匙（小红书自动发货的固定链接 ?k=…）；经典 + 怪朋友包含在内，其余皮肤每款 1 元另买
+    # 每日清单 1.99 元：App 本体要钥匙（小红书自动发货的固定链接 ?k=…）；经典、怪朋友、机芯、波普网点包含在内，其余 5 款皮肤每款 1 元另买（在小Y 主页置顶笔记里买）
     "themes": ALL, "free": False, "hashes": json.load(open(os.path.join(ROOT, "app_keys.json"), encoding="utf-8")),
     "freeThemes": FREE, "cost": 10000, "defaultTheme": "lwf",
     # 卖出去的星星密钥：输入后直接解锁对应主题
