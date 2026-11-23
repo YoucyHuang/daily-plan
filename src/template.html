@@ -237,6 +237,16 @@
   }
   .brand b { display:block; font-family:var(--font-body); font-weight:500; font-size:17px; letter-spacing:.08em; }
   .brand small { display:block; color:var(--ink-3); font-size:12px; letter-spacing:.04em; margin-top:1px; }
+  /* 左上角日期：点一下弹出日期选择，换到哪天就显示那天的清单 */
+  .top-date-row { display:flex; align-items:center; gap:6px; margin-top:1px; }
+  .top-date-pick { position:relative; display:inline-flex; align-items:center; gap:4px; padding:1px 7px 1px 0; border-radius:8px; cursor:pointer; }
+  .top-date-pick small { margin:0; }
+  .top-date-pick:hover small, .top-date-pick:focus-within small { color:var(--ink-1); }
+  .td-caret { width:9px; height:6px; fill:none; stroke:var(--ink-3); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .top-date-pick input { position:absolute; inset:0; width:100%; height:100%; opacity:0; border:0; padding:0; margin:0; cursor:pointer; font-size:16px; }
+  .top-date-pick input::-webkit-calendar-picker-indicator { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+  .td-today { border:1px solid var(--rule); background:var(--surface); color:var(--ink-2); border-radius:999px; font-size:11px; line-height:1; padding:3px 8px; cursor:pointer; }
+  .td-today[hidden] { display:none; }
 
   .tabs { display:flex; gap:4px; background:var(--surface-2); padding:4px; border-radius:999px; }
   .tabs a {
@@ -1053,7 +1063,7 @@
   <header class="topbar">
     <div class="brand">
       <div class="brand-mark">日</div>
-      <div><b>每日计划</b><small id="topDate"></small></div>
+      <div><b>每日计划</b><span class="top-date-row"><label class="top-date-pick" title="点一下换日期"><small id="topDate"></small><svg class="td-caret" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4"/></svg><input type="date" id="topDatePick" aria-label="换一天"></label><button type="button" class="td-today" id="tdToday" hidden>回今天</button></span></div>
     </div>
     <nav class="tabs">
       <a href="#today" data-view="today">
@@ -1638,6 +1648,9 @@
     const v = $("#dateInput").value;
     $("#dateText").textContent = v || " ";
     $("#topDate").textContent = prettyDate(v);
+    const k = keyFrom(v);
+    if (k) $("#topDatePick").value = k;
+    $("#tdToday").hidden = !k || k === keyFrom(todayStr());
     $("#tDate").textContent = prettyDate(v);
   }
   $("#dateInput").addEventListener("input", () => { syncDateText(); if (isDesigned()) render(); });
@@ -1646,6 +1659,24 @@
     const k = currentKey();
     if (k && loadDay(k)) { if (applyDated(k)) saveDay(); renderAll(); }
   });
+  /* 换到某一天：有记录就打开那天；没记录就新开一张（每日默认清单 → 最近一天的事项），再加上那天指定的事 */
+  function goDay(k) {
+    if (!k) return;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    $("#dateInput").value = labelOf(k);
+    syncDateText();
+    if (!loadDay(k)) {
+      const recent = sortedKeys()[0];
+      setItems(defaultItems() || (recent ? days[recent].items.map((x) => ({ text: x.text, mark: "empty" })) : DEFAULT_ITEMS));
+    }
+    if (applyDated(k)) saveDay();
+    renderAll();
+    if (location.hash.slice(1) !== "today" && location.hash) location.hash = "#today";
+  }
+  $("#topDatePick").addEventListener("change", (e) => goDay(e.target.value));
+  /* 电脑上点文字也能直接弹出日历 */
+  $("#topDatePick").addEventListener("click", (e) => { try { e.target.showPicker && e.target.showPicker(); } catch (_) {} });
+  $("#tdToday").addEventListener("click", () => goDay(keyFrom(todayStr())));
 
   /* ───────────────── 配色切换 ───────────────── */
   const swatches = document.querySelectorAll(".swatch");
@@ -4447,6 +4478,7 @@
   const NEWS = [
     { icon: "📝", title: "每日默认清单", text: "在「我的」里写好每天都要做的固定小事，新的一天打开时自动填好，不用每天重新写。", go: "me-defaults", btn: "去设置" },
     { icon: "📅", title: "指定日期的事", text: "提前写好哪天要做什么（也可以每年重复，比如生日），到了那天打开清单就自动出现。", go: "me-dated", btn: "去添加" },
+    { icon: "🗓️", title: "左上角日期可以点", text: "点左上角的日期就能换到任意一天，看过去的清单，或提前写好之后的。" },
     { icon: "👀", title: "皮肤可以先看看再决定", text: "还没解锁的皮肤，点「先看看长什么样」就能预览你今天的清单。" },
     { icon: "🎁", title: "机芯、波普网点免费啦", text: "这两款皮肤现在直接就能用。" },
   ];
