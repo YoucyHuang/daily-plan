@@ -1660,7 +1660,7 @@
     if (k && loadDay(k)) { if (applyDated(k)) saveDay(); renderAll(); }
   });
   /* 换到某一天：有记录就打开那天；没记录就新开一张（每日默认清单 → 最近一天的事项），再加上那天指定的事 */
-  function goDay(k) {
+  function goDay(k, quiet) {
     if (!k) return;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     $("#dateInput").value = labelOf(k);
@@ -1671,7 +1671,7 @@
     }
     if (applyDated(k)) saveDay();
     renderAll();
-    if (location.hash.slice(1) !== "today" && location.hash) location.hash = "#today";
+    if (!quiet && location.hash.slice(1) !== "today" && location.hash) location.hash = "#today";
   }
   $("#topDatePick").addEventListener("change", (e) => goDay(e.target.value));
   /* 电脑上点文字也能直接弹出日历 */
@@ -1973,7 +1973,6 @@
     $("#dateInput").value = todayStr();
     syncDateText();
     const k = currentKey();
-    if (days[k] && days[k].towered) { loadDay(k); nextCard(k); return; }
     if (!loadDay(k)) {
       const recent = sortedKeys()[0];
       setItems(defaultItems() || (recent ? days[recent].items : DEFAULT_ITEMS));
@@ -1985,18 +1984,8 @@
 
   function renderAll() { render(); renderToday(); }
 
-  /* 放进通天塔的那天就封存了：清单自动换成下一天的新卡（事项文字留着、勾叉清空），再打勾也不会改到塔里那张 */
+  /* 日期永远跟着真实的今天走：上传通天塔后也留在今天（塔里存的是那一刻的成品卡截图，之后再打勾不会改到它） */
   function labelOf(k) { const [y, m, d] = k.split("-").map(Number), t = new Date(y, m - 1, d); return `${y}.${p2(m)}.${p2(d)} 周${WDAY[t.getDay()]}`; }
-  function nextCard(k) {
-    const [y, m, d] = k.split("-").map(Number), n = new Date(y, m - 1, d);
-    do { n.setDate(n.getDate() + 1); k = `${n.getFullYear()}-${p2(n.getMonth() + 1)}-${p2(n.getDate())}`; } while (days[k] && days[k].towered);
-    const texts = items.filter((x) => x.text).map((x) => ({ text: x.text, mark: "empty" }));
-    $("#dateInput").value = labelOf(k);
-    syncDateText();
-    if (!loadDay(k)) setItems(defaultItems() || (texts.length ? texts : DEFAULT_ITEMS));
-    applyDated(k);
-    renderAll();
-  }
 
   /* ───────────────── 设计主题：整页版式 ─────────────────
      每个主题一个函数，返回 1080×1440 的整页 HTML。
@@ -3308,12 +3297,11 @@
     btn.disabled = false;
     if (window.GAME) GAME.exported();
     days[k].towered = Date.now(); persist();
-    nextCard(k);
     location.hash = "#archive";
     setTimeout(() => {
       const el = document.querySelector(`#drumViewport .mini[data-key="${k}"]`);
       if (el) el.classList.add("fresh");
-      if (window.GAME) GAME.toast("✦", "已放进人生通天塔", "清单换成新的一张：" + prettyDate($("#dateInput").value));
+      if (window.GAME) GAME.toast("✦", "已放进人生通天塔", "今天还能接着打勾，明天打开会自动换成新的一天");
     }, 350);
   });
 
@@ -3910,7 +3898,7 @@
     document.body.classList.add("peeking");
     setTheme(t, false);
     renderAll(); fit();
-    if (location.hash.slice(1) !== "today" && location.hash) location.hash = "#today";
+    if (!quiet && location.hash.slice(1) !== "today" && location.hash) location.hash = "#today";
     setTimeout(goStudio, 60);
   }
   function peekExit() {
@@ -4588,8 +4576,7 @@
     try { last = localStorage.getItem("dailyplan.lastTheme"); } catch (e) {}
     if (THEMES.includes(last) && (!window.GAME || GAME.isOwned(last))) setTheme(last, false);
   }
-  if (days[currentKey()] && days[currentKey()].towered) { loadDay(currentKey()); nextCard(currentKey()); }
-  else if (!loadDay(currentKey())) {
+  if (!loadDay(currentKey())) {
     const recent = sortedKeys()[0];
     if (defaultItems()) {
       setItems(defaultItems());
@@ -4602,6 +4589,17 @@
     }
   }
   if (applyDated(currentKey())) saveDay();
+  /* 一直开着过了午夜、或者隔天从后台切回来：如果还停在「旧的今天」，自动换到真正的今天 */
+  let shownToday = keyFrom(todayStr());
+  const syncToday = () => {
+    const t = keyFrom(todayStr());
+    if (t === shownToday) return;
+    const was = shownToday; shownToday = t;
+    if (currentKey() === was) goDay(t, true);
+  };
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") syncToday(); });
+  window.addEventListener("focus", syncToday);
+  setInterval(syncToday, 60 * 1000);
   /* 网址参数（预览 / 分享某个样式用，不会写进记录）：
      ?theme=autumn&pal=2&mode=back&demo=1&solo=1 */
   const q = new URLSearchParams(location.search);
