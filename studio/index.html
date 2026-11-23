@@ -341,6 +341,8 @@
   .t-grip { width:22px; height:36px; flex:none; margin:0 -8px 0 -6px; display:grid; place-items:center; color:var(--ink-3); cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none; }
   .t-grip svg { width:14px; height:20px; fill:currentColor; }
   .t-item.lifting { z-index:5; box-shadow:0 10px 24px rgba(0,0,0,.18); transition:none !important; cursor:grabbing; opacity:.96; }
+  .t-item { -webkit-touch-callout:none; }
+  .t-list.sorting, .t-list.sorting * { -webkit-user-select:none; user-select:none; cursor:grabbing; }
   .t-add { display:flex; gap:8px; }
   .un-gap { margin-top:8px; font-size:13px; color:var(--ink-2); text-align:center; }
   .t-add .field { min-height:46px; font-size:16px; background:var(--surface); }
@@ -844,19 +846,33 @@
   #questList li.ok { color:var(--ink-3); text-decoration:line-through; }
   #questList li.ok .qd { background:#36c9a0; border-color:#36c9a0; }
 
-  /* 我的：3D 小Y + 战绩 */
+  /* 我的：2D 小Y + 战绩 */
   .me-wrap { max-width:520px; margin:0 auto; padding:22px 16px 48px; display:grid; gap:14px; }
-  .me-stage { position:relative; width:100%; aspect-ratio:4 / 5; max-height:62vh; margin:0 auto; border-radius:24px; overflow:hidden;
+  .me-stage { position:relative; width:100%; aspect-ratio:8 / 5; max-height:31vh; margin:0 auto; border-radius:24px; overflow:hidden;
     background:radial-gradient(70% 55% at 50% 45%, var(--surface), var(--surface-2)); border:1.5px solid var(--rule); }
   .me-stage canvas { position:absolute; inset:0; width:100% !important; height:100% !important; touch-action:none; cursor:grab; }
   .me-stage canvas:active { cursor:grabbing; }
-  .me-say { position:absolute; left:14px; top:14px; z-index:2; max-width:70%; padding:7px 12px; border-radius:14px 14px 14px 4px; background:var(--surface);
+  .me-say { position:absolute; left:14px; top:14px; z-index:2; max-width:min(34%, 170px); padding:7px 12px; border-radius:14px 14px 14px 4px; background:var(--surface);
     border:1.5px solid var(--rule); box-shadow:var(--shadow); color:var(--ink-1); font-size:13px; line-height:1.45; pointer-events:none; }
   .me-say.show { animation:sayIn .3s cubic-bezier(.3,.7,.3,1.4); }
   .me-hint { position:absolute; left:0; right:0; bottom:10px; z-index:2; text-align:center; font-size:11.5px; color:var(--ink-3); pointer-events:none; }
-  .me-fallback { position:absolute; inset:12% 18% 14%; display:grid; place-items:center; }
-  .me-fallback[hidden] { display:none; }
-  .me-fallback svg { width:100%; height:100%; }
+  /* 2D 手绘小Y（和表情包同一个形象）：呼吸、挥手、眨眼，点一下跳 */
+  .yy2d { position:absolute; left:50%; top:6%; height:82%; aspect-ratio:200 / 250; transform:translateX(-50%); cursor:pointer; overflow:visible; -webkit-tap-highlight-color:transparent; }
+  .yy-eye { fill:var(--yy-eye, #3d2b2b); stroke:#3d2b2b; stroke-width:1.6; }
+  .yy-breathe, .yy-face { transform-box:view-box; transform-origin:100px 220px; animation:yyBreathe 2.6s ease-in-out infinite; }
+  .yy-arm-r { transform-box:view-box; transform-origin:144px 122px; animation:yyWave 1.6s ease-in-out infinite; }
+  .yy-arm-l { transform-box:view-box; transform-origin:56px 122px; animation:yySway 2.6s ease-in-out infinite; }
+  .yy-ball { transform-box:fill-box; transform-origin:center; animation:yyBob 1.3s ease-in-out infinite; }
+  .yy-eyes { transform-box:view-box; transform-origin:100px 108px; animation:yyBlink 4.2s infinite; }
+  .yy-jump { transform-box:view-box; transform-origin:100px 230px; }
+  .yy2d.hop .yy-jump { animation:yyHop .55s cubic-bezier(.3,.7,.4,1); }
+  @keyframes yyBreathe { 0%,100% { transform:translateY(0) scale(1,1); } 50% { transform:translateY(-2px) scale(1.012,.988); } }
+  @keyframes yyWave { 0%,100% { transform:rotate(0); } 50% { transform:rotate(-16deg); } }
+  @keyframes yySway { 0%,100% { transform:rotate(0); } 50% { transform:rotate(6deg); } }
+  @keyframes yyBob { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-3px); } }
+  @keyframes yyBlink { 0%,92%,100% { transform:scaleY(1); } 95% { transform:scaleY(.1); } }
+  @keyframes yyHop { 0% { transform:translateY(0) scale(1.06,.92); } 40% { transform:translateY(-34px) scale(.96,1.05); } 75% { transform:translateY(0) scale(1.05,.94); } 100% { transform:translateY(0) scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .yy-breathe, .yy-face, .yy-arm-r, .yy-arm-l, .yy-ball, .yy-eyes { animation:none; } }
   .me-id { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; font-size:12px; color:var(--ink-2); }
   .me-id b { font-size:16px; color:var(--ink-1); white-space:nowrap; }
   .me-stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
@@ -877,6 +893,33 @@
   .skin-land .sl-steps { margin:6px 0 12px; padding-left:1.3em; text-align:left; line-height:1.7; }
   .skin-land .sl-or { margin:16px 0 4px; padding-top:12px; border-top:1px dashed currentColor; text-align:left; opacity:.85; }
   .skin-land .sl-form { padding:0 !important; margin:0 !important; background:none !important; border:0 !important; box-shadow:none !important; width:auto !important; }
+  #dfText { width:100%; min-height:120px; margin-top:8px; font-size:15px; line-height:1.7; resize:vertical; }
+  .df-hint { margin:4px 0 0; line-height:1.6; }
+  .df-toggle { min-height:34px; padding:4px 14px; }
+  .df-toggle.on { background:var(--ink-1); color:var(--surface); border-color:var(--ink-1); }
+  .df-apply { width:100%; margin-top:8px; }
+  .dt-form { display:flex; gap:8px; margin-top:8px; }
+  .dt-form .field { flex:1 1 0; width:auto; min-width:0; min-height:40px; font-size:15px; }
+  .dt-form select.field { flex:0 0 auto; width:auto; }
+  .dt-form .btn { flex:none; }
+  .dt-list { list-style:none; margin:10px 0 0; padding:0; display:grid; gap:6px; }
+  .dt-list li { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; background:var(--surface-2); font-size:14px; }
+  .dt-list li.past { opacity:.5; }
+  .dt-list li { cursor:pointer; }
+  .dt-list li.editing { outline:2px solid var(--sage); outline-offset:-2px; opacity:1; }
+  .dt-editing { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; font-size:13px; color:var(--sage); }
+  .dt-editing[hidden] { display:none; }
+  .dt-editing .btn { min-height:30px; padding:2px 12px; font-size:13px; }
+  .dt-list .dt-when { flex:none; font-size:12px; color:var(--ink-3); min-width:74px; line-height:1.35; }
+  .dt-list .dt-what { flex:1; min-width:0; overflow-wrap:anywhere; }
+  .dt-list .dt-del { flex:none; border:0; background:none; color:var(--ink-3); font-size:18px; line-height:1; padding:4px 6px; cursor:pointer; }
+  dialog.news-dialog h3 { margin:0 0 4px; font-size:20px; }
+  .news-sub { margin:0 0 12px; font-size:13px; color:var(--ink-3); }
+  .news-list { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+  .news-list li { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:14px; background:var(--surface-2); font-size:14px; line-height:1.6; }
+  .news-list li b { display:block; font-size:15px; }
+  .news-list li i { flex:none; font-style:normal; font-size:18px; line-height:1.4; }
+  .news-list .btn { margin-top:6px; min-height:32px; padding:4px 12px; font-size:13px; }
   .top-list { list-style:none; margin:8px 0 2px; padding:0; display:grid; gap:9px; }
   .top-list li { display:grid; grid-template-columns:26px 1fr auto; align-items:center; gap:4px 10px; font-size:14px; color:var(--ink-1); }
   .top-list .rk { grid-row:span 2; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font:700 13px/1 var(--font-latin, sans-serif); background:var(--surface-2); border:1.5px solid var(--rule); }
@@ -885,6 +928,7 @@
   .top-list .ct { font-size:12.5px; color:var(--ink-3); white-space:nowrap; }
   .top-list .bar { grid-column:2 / -1; height:6px; border-radius:99px; background:var(--surface-2); overflow:hidden; }
   .top-list .bar i { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg, #ffc21a, #ff8a1a); }
+  .top-list li.top-empty { display:block; }
   .top-empty { font-size:13px; color:var(--ink-3); line-height:1.6; }
   .me-emo { padding:10px 14px 12px; border-radius:16px; background:var(--surface); border:1.5px solid var(--rule); }
   .me-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
@@ -1257,8 +1301,32 @@
       <div class="me-wrap">
         <div class="me-stage" id="meStage">
           <div class="me-say" id="meSay">嗨，我是小Y～</div>
-          <div class="me-fallback" id="meFallback" hidden></div>
-          <small class="me-hint">拖动转一圈 · 点它会跳</small>
+          <svg class="yy2d" viewBox="0 0 200 250" aria-label="小Y">
+            <defs>
+              <filter id="yyWob" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="2"><animate attributeName="seed" values="2;5;8" dur=".5s" calcMode="discrete" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" scale="2.6"/></filter>
+              <pattern id="yyHatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-32)"><path d="M0 3.5h7" stroke="#ee93b2" stroke-width="1.6" opacity=".75"/></pattern>
+              <clipPath id="yyBodyClip"><rect x="55" y="62" width="90" height="116" rx="7"/></clipPath>
+            </defs>
+            <ellipse class="yy-shadow" cx="100" cy="236" rx="46" ry="6" fill="#000" opacity=".08"/>
+            <g class="yy-jump"><g class="yy-breathe" filter="url(#yyWob)" stroke="#3d2b2b" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M86 176 L83 218 M114 176 L118 218" stroke-width="4" fill="none"/>
+              <ellipse cx="80" cy="222" rx="13" ry="6.5" fill="#fbd3df" stroke-width="2.5"/><ellipse cx="121" cy="222" rx="13" ry="6.5" fill="#fbd3df" stroke-width="2.5"/>
+              <g class="yy-arm-l"><path d="M56 122 Q44 136 38 154" stroke-width="4" fill="none"/><path d="M38 154 l-6 3 M38 154 l-2 7 M38 154 l4 6" stroke-width="2.4" fill="none"/><circle cx="38" cy="154" r="3.6" fill="#fbd3df" stroke-width="2"/></g>
+              <g class="yy-arm-r"><path d="M144 122 Q160 110 168 90" stroke-width="4" fill="none"/><path d="M168 90 l-2 -7 M168 90 l5 -5 M168 90 l7 0" stroke-width="2.4" fill="none"/><circle cx="168" cy="90" r="3.6" fill="#fbd3df" stroke-width="2"/></g>
+              <path d="M126 62 Q124 48 130 38" stroke-width="3.5" fill="none"/><circle class="yy-ball" cx="132" cy="33" r="6" fill="#f5c44a" stroke-width="2.5"/>
+              <path d="M68 62 L66 40 L76 50 L84 36 L91 50 L100 40 L98 62 Z" fill="#f5c44a" stroke-width="2.6"/>
+              <rect x="55" y="62" width="90" height="116" rx="7" fill="#fbd0dd" stroke="none"/>
+              <rect x="55" y="62" width="90" height="116" fill="url(#yyHatch)" clip-path="url(#yyBodyClip)" stroke="none"/>
+              <rect x="55" y="62" width="90" height="116" rx="7" fill="none" stroke-width="4.2"/>
+            </g>
+            <g class="yy-face">
+              <ellipse cx="76" cy="121" rx="9" ry="5" fill="#f6a184" opacity=".85"/><ellipse cx="124" cy="121" rx="9" ry="5" fill="#f6a184" opacity=".85"/>
+              <g class="yy-eyes"><ellipse class="yy-eye" cx="86" cy="108" rx="4.6" ry="5.4"/><ellipse class="yy-eye" cx="114" cy="108" rx="4.6" ry="5.4"/>
+                <circle cx="87.4" cy="106.2" r="1.4" fill="#fff"/><circle cx="115.4" cy="106.2" r="1.4" fill="#fff"/></g>
+              <path d="M92 122 Q100 129 108 122" fill="none" stroke="#3d2b2b" stroke-width="2.8" stroke-linecap="round"/>
+            </g></g>
+          </svg>
+          <small class="me-hint">点它会跳</small>
         </div>
         <div class="me-id">
           <b id="meTitle">Lv.1</b>
@@ -1310,6 +1378,31 @@
             最稳的做法：添加到主屏幕，每周「备份到文件」或「复制备份文字」存进备忘录 / 发给微信文件传输助手一次。
           </details>
         </div>
+        <div class="me-emo me-defaults" id="meDefaults">
+          <div class="q-head"><span>每日默认清单</span><small id="dfState">还没设置</small></div>
+          <p class="chip df-hint">每天都要做的固定小事写在这里，一行一件。新的一天打开时，清单会自动填好这些。</p>
+          <textarea class="field" id="dfText" rows="5" placeholder="喝 1.5L 水&#10;睡够 8 小时&#10;好好吃一顿饭&#10;出门晒 10 分钟太阳"></textarea>
+          <div class="rm-btns">
+            <button class="btn primary" id="dfSave">保存为每日默认</button>
+            <button class="btn" id="dfFromToday">填入今天的清单</button>
+          </div>
+          <div class="rm-row"><span>新的一天自动套用</span><button class="btn df-toggle" id="dfToggle">已开启</button></div>
+          <button class="btn df-apply" id="dfApply">今天也换成默认清单</button>
+        </div>
+        <div class="me-emo me-dated" id="meDated">
+          <div class="q-head"><span>指定日期的事</span><small id="dtState">还没有</small></div>
+          <p class="chip df-hint">提前写好哪天要做什么，到了那天打开每日清单，这件事会自动出现在清单里。点下面的一条可以修改。</p>
+          <div class="dt-form">
+            <input class="field" type="date" id="dtDate" aria-label="日期">
+            <select class="field" id="dtRepeat" aria-label="重复"><option value="">只这一天</option><option value="year">每年这天</option></select>
+          </div>
+          <div class="dt-form">
+            <input class="field" id="dtText" maxlength="40" placeholder="比如：交房租 / 妈妈生日 / 复诊">
+            <button class="btn primary" id="dtAdd">添加</button>
+          </div>
+          <div class="dt-editing" id="dtEditing" hidden><span>正在修改这一条</span><button class="btn" id="dtCancel">取消</button></div>
+          <ul class="dt-list" id="dtList"></ul>
+        </div>
         <div class="me-emo me-remind">
           <div class="q-head"><span>每日提醒</span><small id="rmState">没开</small></div>
           <div class="rm-row"><span>中午提醒</span><input class="field rm-time" type="time" id="rmTime0" value="12:00"></div>
@@ -1357,6 +1450,12 @@
     <h3 id="bkTitle">备份好了 ✓</h3>
     <div id="bkBody"></div>
     <div class="dialog-actions"><button class="btn primary" id="bkOk">知道了</button></div>
+  </dialog>
+  <dialog class="day-dialog news-dialog" id="newsDialog">
+    <h3>每日清单更新啦 ✦</h3>
+    <p class="news-sub">这次新加了这些：</p>
+    <ul class="news-list" id="newsList"></ul>
+    <div class="dialog-actions"><button class="btn primary" id="newsOk">知道了</button></div>
   </dialog>
   <dialog class="day-dialog" id="pasteDialog">
     <h3>粘贴恢复</h3>
@@ -1469,7 +1568,31 @@
     return m ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : null;
   }
   const currentKey = () => keyFrom($("#dateInput").value);
+  /* 每日默认清单：「我的」里设置；新的一天、全部清空、重置、上传后换下一张卡时，自动填好这些事 */
+  const DEF_KEY = "dailyplan.defaults.v1";
+  let DEFS = { on: false, items: [] };
+  try { DEFS = Object.assign(DEFS, JSON.parse(localStorage.getItem(DEF_KEY)) || {}); } catch (e) {}
+  const saveDefs = () => { try { localStorage.setItem(DEF_KEY, JSON.stringify(DEFS)); } catch (e) {} if (window.vaultSave) vaultSave(); };
+  const defaultItems = () => (DEFS.on && DEFS.items.length ? DEFS.items.map((text) => ({ text, mark: "empty" })) : null);
   const sortedKeys = () => Object.keys(days).sort().reverse();
+  /* 指定日期的事：{ id, date:"YYYY-MM-DD", text, repeat:""|"year", last:"上次加进清单的那天" }
+     到了那天，打开清单就自动加进去（每条每天只加一次，删掉了不会再冒出来） */
+  const DATED_KEY = "dailyplan.dated.v1";
+  let DATED = [];
+  try { DATED = JSON.parse(localStorage.getItem(DATED_KEY)) || []; } catch (e) {}
+  if (!Array.isArray(DATED)) DATED = [];
+  const saveDated = () => { try { localStorage.setItem(DATED_KEY, JSON.stringify(DATED)); } catch (e) {} if (window.vaultSave) vaultSave(); };
+  const datedHits = (k) => DATED.filter((e) => k && (e.date === k || (e.repeat === "year" && k >= e.date && e.date.slice(5) === k.slice(5))));
+  /* force：全部清空 / 换成默认清单后，把今天该做的事再放回来 */
+  function applyDated(k, force) {
+    let changed = false;
+    datedHits(k).forEach((e) => {
+      if (!force && e.last === k) return;
+      if (!items.some((x) => x.text === e.text)) { items.push({ id: idSeq++, text: e.text, mark: "empty" }); changed = true; }
+      if (e.last !== k) { e.last = k; saveDated(); }
+    });
+    return changed;
+  }
 
   /* 只有真的改动过才存，打开页面不会凭空多出一天 */
   function saveDay() {
@@ -1528,7 +1651,7 @@
   /* 改到一个已记录过的日期 → 载入那天的清单 */
   $("#dateInput").addEventListener("change", () => {
     const k = currentKey();
-    if (k && loadDay(k)) renderAll();
+    if (k && loadDay(k)) { if (applyDated(k)) saveDay(); renderAll(); }
   });
 
   /* ───────────────── 配色切换 ───────────────── */
@@ -1704,6 +1827,7 @@
       grip.setAttribute("aria-label", "按住上下拖动，调整顺序");
       grip.innerHTML = '<svg viewBox="0 0 10 16"><circle cx="2.5" cy="3" r="1.5"/><circle cx="7.5" cy="3" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13" r="1.5"/><circle cx="7.5" cy="13" r="1.5"/></svg>';
       grip.addEventListener("pointerdown", (e) => startSort(e, li));
+      li.addEventListener("pointerdown", (e) => pressSort(e, li));
 
       li.dataset.id = it.id;
       li.append(grip, box, text, del);
@@ -1720,35 +1844,83 @@
       : total && items.every((x) => x.mark !== "empty") ? "今天结束了。没做成的也没关系，明天再来。" : "";
   }
   /* 按住把手上下拖：被拖的那块跟着手指走，经过别的块就换位置，松手后存新顺序 */
+  /* 按住卡片：电脑上按住往上下拖就开始排；手机上长按 0.3 秒（会轻震一下）再拖，不长按就是正常滚动 */
+  function pressSort(e, li) {
+    if (sorting || e.button > 0 || e.target.closest(".t-check, .t-del, .t-grip")) return;
+    const tx = e.target.closest(".t-text");
+    if (tx && document.activeElement === tx) return;   // 正在改字时不拖
+    const x0 = e.clientX, y0 = e.clientY, id = e.pointerId;
+    if (e.pointerType === "mouse") {
+      const mv = (ev) => {
+        const dy = Math.abs(ev.clientY - y0);
+        if (dy > 6 && dy > Math.abs(ev.clientX - x0)) { off(); startSort(ev, li); }
+      };
+      const off = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", off); };
+      window.addEventListener("pointermove", mv); window.addEventListener("pointerup", off);
+      return;
+    }
+    const t = setTimeout(() => { off(); startSort({ clientY: y0, pointerId: id }, li); }, 300);
+    const mv = (ev) => { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 8) off(); };
+    const off = () => {
+      clearTimeout(t);
+      li.removeEventListener("pointermove", mv);
+      ["pointerup", "pointercancel"].forEach((n) => li.removeEventListener(n, off));
+    };
+    li.addEventListener("pointermove", mv);
+    li.addEventListener("pointerup", off); li.addEventListener("pointercancel", off);
+  }
+  let sorting = null;
   function startSort(e, li) {
-    e.preventDefault(); e.stopPropagation();
-    const grip = e.currentTarget;
-    try { grip.setPointerCapture(e.pointerId); } catch (_) {}
-    const grab = e.clientY - li.getBoundingClientRect().top;
-    let shift = 0;
+    if (sorting) return;
+    if (e.cancelable) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+    if (document.activeElement && li.contains(document.activeElement)) document.activeElement.blur();
+    try { getSelection().removeAllRanges(); } catch (_) {}
+    try { li.setPointerCapture(e.pointerId); } catch (_) {}
+    const st = sorting = { y: e.clientY, startY: e.clientY, startTop: li.offsetTop, startScroll: window.scrollY, id: e.pointerId, raf: 0 };
     li.classList.add("lifting");
-    if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {}
-    const move = (ev) => {
-      const want = ev.clientY - grab, mid = want + li.offsetHeight / 2;
+    tList.classList.add("sorting");
+    if (navigator.vibrate) try { navigator.vibrate(10); } catch (_) {}
+    /* 用 offsetTop 算位置（不受 transform 影响），卡片跟手不抖 */
+    const place = () => {
+      const want = st.startTop + (st.y - st.startY) + (window.scrollY - st.startScroll);
+      const mid = want + li.offsetHeight / 2;
       let before = null;
       for (const sib of tList.children) {
         if (sib === li) continue;
-        const r = sib.getBoundingClientRect();
-        if (mid < r.top + r.height / 2) { before = sib; break; }
+        if (mid < sib.offsetTop + sib.offsetHeight / 2) { before = sib; break; }
       }
       if (li.nextElementSibling !== before) tList.insertBefore(li, before);
-      const natural = li.getBoundingClientRect().top - shift;
-      shift = want - natural;
-      li.style.transform = `translateY(${shift}px)`;
+      li.style.transform = `translateY(${want - li.offsetTop}px) scale(1.02)`;
     };
-    const end = () => {
-      grip.removeEventListener("pointermove", move); grip.removeEventListener("pointerup", end); grip.removeEventListener("pointercancel", end);
-      li.classList.remove("lifting"); li.style.transform = "";
+    /* 拖到屏幕上下边缘时自动滚动，长清单也能一路拖到底 */
+    const tick = () => {
+      const H = window.innerHeight, top = 80, bottom = H - 110;
+      let v = 0;
+      if (st.y < top) v = -Math.min(18, Math.ceil((top - st.y) / 5));
+      else if (st.y > bottom) v = Math.min(18, Math.ceil((st.y - bottom) / 5));
+      if (v) { window.scrollBy(0, v); place(); }
+      st.raf = requestAnimationFrame(tick);
+    };
+    const move = (ev) => { if (ev.pointerId !== st.id) return; st.y = ev.clientY; place(); };
+    const block = (ev) => { if (ev.cancelable) ev.preventDefault(); };   // 拖的时候页面不跟着滚
+    const end = (ev) => {
+      if (ev && ev.pointerId !== undefined && ev.pointerId !== st.id) return;
+      cancelAnimationFrame(st.raf);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end); window.removeEventListener("pointercancel", end);
+      document.removeEventListener("touchmove", block);
+      li.classList.remove("lifting"); tList.classList.remove("sorting"); li.style.transform = "";
+      sorting = null;
       const next = [...tList.children].map((x) => items.find((it) => it.id === Number(x.dataset.id))).filter(Boolean);
       if (next.length === items.length && next.some((x, i) => x !== items[i])) { items = next; saveDay(); }
       renderAll();
     };
-    grip.addEventListener("pointermove", move); grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end); window.addEventListener("pointercancel", end);
+    document.addEventListener("touchmove", block, { passive: false });
+    place();
+    st.raf = requestAnimationFrame(tick);
   }
 
   $("#tAdd").addEventListener("submit", (e) => {
@@ -1765,8 +1937,10 @@
      重置：日期回到今天，事项留着、勾和叉清掉（像刚打开一样） */
   const BASIC_ITEMS = ["喝 1.5L 水", "睡够 8 小时", "好好吃一顿饭", "出门晒 10 分钟太阳", "做一件让自己开心的小事"];
   $("#tClearAll").addEventListener("click", () => {
-    if (!items.length || !confirm("把今天的事项全部删掉？\n\n清空后会换成 5 件照顾自己的基础小事，可以再改。")) return;
-    setItems(BASIC_ITEMS.map((text) => ({ text, mark: "empty" })));
+    const def = defaultItems();
+    if (!items.length || !confirm(def ? "把今天的事项全部删掉？\n\n清空后会换成你的每日默认清单，可以再改。" : "把今天的事项全部删掉？\n\n清空后会换成 5 件照顾自己的基础小事，可以再改。")) return;
+    setItems(def || BASIC_ITEMS.map((text) => ({ text, mark: "empty" })));
+    applyDated(currentKey(), true);
     saveDay();
     renderAll();
   });
@@ -1778,7 +1952,7 @@
     if (days[k] && days[k].towered) { loadDay(k); nextCard(k); return; }
     if (!loadDay(k)) {
       const recent = sortedKeys()[0];
-      setItems(recent ? days[recent].items : DEFAULT_ITEMS);
+      setItems(defaultItems() || (recent ? days[recent].items : DEFAULT_ITEMS));
     }
     items.forEach((x) => { x.mark = "empty"; });
     if (days[k]) saveDay();
@@ -1795,7 +1969,8 @@
     const texts = items.filter((x) => x.text).map((x) => ({ text: x.text, mark: "empty" }));
     $("#dateInput").value = labelOf(k);
     syncDateText();
-    if (!loadDay(k)) setItems(texts.length ? texts : DEFAULT_ITEMS);
+    if (!loadDay(k)) setItems(defaultItems() || (texts.length ? texts : DEFAULT_ITEMS));
+    applyDated(k);
     renderAll();
   }
 
@@ -4962,7 +5137,7 @@
     const unlocks = {};
     try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith("dailyplan.unlock.")) unlocks[k] = localStorage.getItem(k); } } catch (e) {}
     return { app: "daily-plan", version: 3, exportedAt: new Date().toISOString(), days, palettes: palSel,
-      lastTheme: document.body.dataset.theme, game: window.GAME ? GAME.state() : undefined, unlocks };
+      lastTheme: document.body.dataset.theme, game: window.GAME ? GAME.state() : undefined, unlocks, defaults: DEFS, dated: DATED };
   }
   /* 合并一份备份进来：同一天保留较新的，不删现有的 */
   function mergeBackup(data) {
@@ -4976,6 +5151,12 @@
     if (data.shots) restoreShots(data.shots, replaced);
     persist();
     if (data.palettes) { Object.assign(palSel, data.palettes); savePal(); }
+    if (Array.isArray(data.dated) && data.dated.length) {
+      const have = new Set(DATED.map((e) => e.date + "|" + e.text));
+      data.dated.forEach((e) => { if (e && e.date && e.text && !have.has(e.date + "|" + e.text)) DATED.push(e); });
+      saveDated(); if (window.dtUI) dtUI();
+    }
+    if (data.defaults && Array.isArray(data.defaults.items) && data.defaults.items.length && !DEFS.items.length) { DEFS = { on: !!data.defaults.on, items: data.defaults.items.slice(0, 12) }; saveDefs(); if (window.dfUI) dfUI(); }
     if (data.unlocks) { try { Object.entries(data.unlocks).forEach(([k, v]) => { if (k.startsWith("dailyplan.unlock.") && !localStorage.getItem(k)) localStorage.setItem(k, v); }); } catch (e) {} }
     const gameBack = data.game && window.GAME ? GAME.restore(data.game) : false;
     const k = currentKey();
@@ -5825,6 +6006,7 @@
     li.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse" || e.target.closest(".t-text:focus, .t-del, .t-grip")) return; x0 = e.clientX; y0 = e.clientY; dx = 0; on = true; locked = false; });
     li.addEventListener("pointermove", (e) => {
       if (!on) return;
+      if (li.classList.contains("lifting")) { on = false; return; }
       const mx = e.clientX - x0, my = e.clientY - y0;
       if (!locked) { if (Math.abs(my) > 10) { on = false; return; } if (Math.abs(mx) > 12) { locked = true; li.setPointerCapture(e.pointerId); } else return; }
       dx = Math.max(-140, Math.min(140, mx));
@@ -6020,25 +6202,13 @@
   const MOOD_EYE = { sleep: "#4FA3FF", ok: "#E8434F", first: "#E8434F", party: "#FFC61A", worry: "#4FD69C", cross: "#8A9BC4" };
   const EYE_KEY = "dailyplan.yyEye";
   let eyePick = (() => { try { return localStorage.getItem(EYE_KEY) || "auto"; } catch (e) { return "auto"; } })();
-  let yy3d = null, yyLoading = null;
   const eyeHex = () => (eyePick === "auto" ? MOOD_EYE[mood()] : (EYES.find((e) => e[0] === eyePick) || EYES[1])[2]);
-  const loadScript = (src) => new Promise((ok, no) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
-  function yyLoad() {
-    if (yyLoading) return yyLoading;
-    const base = new URL("assets/three/", document.querySelector('script[src$="html-to-image.js"]').src).href;
-    yyLoading = (window.THREE ? Promise.resolve() : loadScript(base + "three.min.js"))
-      .then(() => Promise.all(["OrbitControls.js", "BufferGeometryUtils.js", "xiaoy3d.js"].map((f) => loadScript(base + f))))
-      .then(() => {
-        yy3d = mountXiaoY3D($("#meStage"));
-        $("#meStage").addEventListener("yytap", () => { buzz(10); meSay("tap"); });
-      })
-      .catch(() => {
-        $("#meFallback").innerHTML = $("#buddy svg").outerHTML;
-        $("#meFallback").hidden = false;
-        $(".me-hint").textContent = "这台设备显示不了 3D，先看看平面的小Y";
-      });
-    return yyLoading;
-  }
+  /* 2D 手绘小Y：眼睛颜色跟着心情，点一下跳 */
+  const yy2 = $("#meStage .yy2d");
+  const yyEye = () => yy2.style.setProperty("--yy-eye", eyeHex());
+  const yyHop = () => { yy2.classList.remove("hop"); void yy2.getBoundingClientRect(); yy2.classList.add("hop"); };
+  yy2.addEventListener("animationend", (e) => { if (e.animationName === "yyHop") yy2.classList.remove("hop"); });
+  yy2.addEventListener("click", () => { yyHop(); buzz(10); meSay("tap"); });
   function meSay(kind) {
     const list = LINES[kind] || LINES.sleep, b = $("#meSay");
     b.textContent = list[(Math.random() * list.length) | 0];
@@ -6075,15 +6245,15 @@
     topUI();
     $("#meEmo").innerHTML = EYES.map((e) => `<button type="button" data-eye="${e[0]}" aria-pressed="${e[0] === eyePick}">${e[2] ? `<i style="background:${e[2]}"></i>` : ""}${e[1]}</button>`).join("");
     meSay(mood());
-    yyLoad().then(() => { if (yy3d) { yy3d.setEye(eyeHex()); yy3d.start(); } });
+    yyEye();
   }
-  function meStop() { if (yy3d) yy3d.stop(); }
+  function meStop() {}
   $("#meEmo").addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
     eyePick = b.dataset.eye;
     try { localStorage.setItem(EYE_KEY, eyePick); } catch (x) {}
     $("#meEmo").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b));
-    if (yy3d) { yy3d.setEye(eyeHex()); yy3d.hop(); }
+    yyEye(); yyHop();
   });
   $("#meBadgeWall").addEventListener("click", () => $("#hudBadges").click());
 
@@ -6229,6 +6399,120 @@
   });
   window.REMIND = { sync: remindSync };
 
+  /* ── 每日默认清单 ── */
+  const dfLines = () => $("#dfText").value.split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 12);
+  function dfUI() {
+    if (document.activeElement !== $("#dfText")) $("#dfText").value = DEFS.items.join("\n");
+    $("#dfState").textContent = !DEFS.items.length ? "还没设置" : DEFS.on ? `每天自动填好 · ${DEFS.items.length} 件` : `已保存 ${DEFS.items.length} 件 · 没开`;
+    $("#dfToggle").textContent = DEFS.on ? "已开启" : "没开";
+    $("#dfToggle").classList.toggle("on", DEFS.on);
+    $("#dfApply").hidden = !DEFS.items.length;
+  }
+  window.dfUI = dfUI;
+  const dfToast = (t, b) => { if (window.GAME) GAME.toast("✓", t, b || ""); };
+  $("#dfSave").addEventListener("click", () => {
+    const ls = dfLines();
+    if (!ls.length) { dfToast("先写几件每天都要做的事", "一行一件"); return; }
+    DEFS.items = ls; DEFS.on = true; saveDefs(); dfUI();
+    dfToast("保存好了", `明天打开时，清单会自动填好这 ${ls.length} 件事`);
+  });
+  $("#dfFromToday").addEventListener("click", () => {
+    const ls = items.map((x) => x.text).filter(Boolean);
+    if (!ls.length) { dfToast("今天的清单还是空的"); return; }
+    $("#dfText").value = ls.slice(0, 12).join("\n");
+    dfToast("填好了", "检查一下，再点「保存为每日默认」");
+  });
+  $("#dfToggle").addEventListener("click", () => {
+    if (!DEFS.items.length) { dfToast("先写好清单，再点「保存为每日默认」"); return; }
+    DEFS.on = !DEFS.on; saveDefs(); dfUI();
+  });
+  $("#dfApply").addEventListener("click", () => {
+    if (!DEFS.items.length || !confirm("把今天的清单换成每日默认清单？今天已经打的勾会清掉。")) return;
+    setItems(DEFS.items.map((text) => ({ text, mark: "empty" }))); applyDated(currentKey(), true); saveDay(); renderAll();
+    dfToast("换好了", "去「今日」看看");
+  });
+  dfUI();
+
+  /* ── 指定日期的事 ── */
+  const dtWhen = (e) => {
+    const [y, m, d] = e.date.split("-").map(Number);
+    return e.repeat === "year" ? `每年 ${m}月${d}日` : `${y}年${m}月${d}日<br>周${WDAY[new Date(y, m - 1, d).getDay()]}`;
+  };
+  /* 下一次发生的日子，排序用 */
+  const dtNext = (e, today) => {
+    if (e.repeat !== "year") return e.date;
+    let n = today.slice(0, 4) + e.date.slice(4);
+    if (n < today) n = (+today.slice(0, 4) + 1) + e.date.slice(4);
+    return n < e.date ? e.date : n;
+  };
+  function dtUI() {
+    const today = TODAY();
+    /* 过去超过 30 天的一次性事项自动清掉 */
+    const cut = new Date(); cut.setDate(cut.getDate() - 30);
+    const cutK = `${cut.getFullYear()}-${p2(cut.getMonth() + 1)}-${p2(cut.getDate())}`;
+    const before = DATED.length;
+    DATED = DATED.filter((e) => e.repeat === "year" || e.date >= cutK);
+    if (DATED.length !== before) saveDated();
+    const list = DATED.slice().sort((a, b) => dtNext(a, today).localeCompare(dtNext(b, today)));
+    const coming = list.filter((e) => dtNext(e, today) >= today).length;
+    $("#dtState").textContent = DATED.length ? `${coming} 件待到来` : "还没有";
+    $("#dtList").innerHTML = list.map((e) => `<li data-edit="${esc(e.id)}" title="点一下修改" class="${dtNext(e, today) < today ? "past" : ""}${e.id === dtEdit ? " editing" : ""}"><span class="dt-when">${dtWhen(e)}</span><span class="dt-what">${esc(e.text)}</span><button class="dt-del" data-dt="${esc(e.id)}" aria-label="删掉">×</button></li>`).join("");
+    if (!$("#dtDate").value) $("#dtDate").value = today;
+  }
+  window.dtUI = dtUI;
+  let dtEdit = null;   // 正在修改的那一条
+  const dtMode = (id) => {
+    dtEdit = id;
+    $("#dtAdd").textContent = id ? "保存修改" : "添加";
+    $("#dtEditing").hidden = !id;
+    if (!id) { $("#dtText").value = ""; $("#dtRepeat").value = ""; $("#dtDate").value = TODAY(); }
+    dtUI();
+  };
+  $("#dtCancel").addEventListener("click", () => dtMode(null));
+  $("#dtAdd").addEventListener("click", () => {
+    const date = $("#dtDate").value, text = $("#dtText").value.trim(), repeat = $("#dtRepeat").value;
+    if (!date) { dfToast("先选一个日期"); return; }
+    if (!text) { dfToast("写一下那天要做什么"); $("#dtText").focus(); return; }
+    const old = dtEdit && DATED.find((x) => x.id === dtEdit);
+    if (old) {
+      /* 改了日期或内容：当作新的一条，到新的那天再出现 */
+      if (old.date !== date || old.text !== text || old.repeat !== repeat) old.last = "";
+      Object.assign(old, { date, text, repeat });
+      saveDated();
+      dtMode(null);
+      const k = currentKey();
+      if (k === TODAY() && applyDated(k)) { saveDay(); renderAll(); dfToast("改好了", "已经加进今天的清单"); }
+      else dfToast("改好了");
+      return;
+    }
+    DATED.push({ id: Date.now().toString(36), date, text, repeat, last: "" });
+    saveDated();
+    $("#dtText").value = "";
+    /* 加的就是今天 → 马上放进今天的清单 */
+    const k = currentKey();
+    if (k === TODAY() && applyDated(k)) { saveDay(); renderAll(); dfToast("已经加进今天的清单"); }
+    else {
+      const [y, m, d] = date.split("-").map(Number);
+      dfToast("记下了", repeat === "year" ? `每年 ${m}月${d}日 打开清单时会自动出现` : `${y}年${m}月${d}日 打开清单时会自动出现`);
+    }
+    dtUI();
+  });
+  $("#dtText").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#dtAdd").click(); });
+  $("#dtList").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-dt]");
+    if (b) {
+      DATED = DATED.filter((x) => x.id !== b.dataset.dt); saveDated();
+      if (dtEdit === b.dataset.dt) dtMode(null); else dtUI();
+      return;
+    }
+    const li = e.target.closest("[data-edit]"); if (!li) return;
+    const it = DATED.find((x) => x.id === li.dataset.edit); if (!it) return;
+    $("#dtDate").value = it.date; $("#dtText").value = it.text; $("#dtRepeat").value = it.repeat || "";
+    dtMode(it.id);
+    $("#dtText").focus();
+  });
+  dtUI();
+
   /* ── 数据安全 ──
      1) 自动副本：每次改动后，把完整备份再存一份到 IndexedDB（和 localStorage 分开存），另外按天留最近 7 份。
         打开时如果发现 localStorage 里的记录比副本少（被清掉一部分），自动合并回来。
@@ -6370,6 +6654,40 @@
   remindUI(); remindSync();
   setTimeout(() => say(mood()), 1200);
 
+  /* ───────────────── 更新提醒 ─────────────────
+     版本号由 build.py 写进来。老用户（有记录的）第一次打开新版时弹一次「这次更新了什么」；新用户不弹。
+     每次发版：把下面 NEWS 换成这一版的内容。 */
+  const APP_VERSION = Number("33") || 0;
+  const SEEN_KEY = "dailyplan.seenVersion";
+  const NEWS = [
+    { icon: "📝", title: "每日默认清单", text: "在「我的」里写好每天都要做的固定小事，新的一天打开时自动填好，不用每天重新写。", go: "me-defaults", btn: "去设置" },
+    { icon: "📅", title: "指定日期的事", text: "提前写好哪天要做什么（也可以每年重复，比如生日），到了那天打开清单就自动出现。", go: "me-dated", btn: "去添加" },
+    { icon: "👀", title: "皮肤可以先看看再决定", text: "还没解锁的皮肤，点「先看看长什么样」就能预览你今天的清单。" },
+    { icon: "🎁", title: "机芯、波普网点免费啦", text: "这两款皮肤现在直接就能用。" },
+  ];
+  function showNews() {
+    let seen = 0;
+    try { seen = Number(localStorage.getItem(SEEN_KEY)) || 0; } catch (e) {}
+    if (!APP_VERSION || seen >= APP_VERSION) return;
+    const markSeen = () => { try { localStorage.setItem(SEEN_KEY, String(APP_VERSION)); } catch (e) {} };
+    if (!Object.keys(days).length || new URLSearchParams(location.search).has("solo")) { markSeen(); return; }   // 新用户不弹
+    /* 门锁、引导、别的弹窗开着的时候先等等 */
+    if (document.querySelector(".lock") || document.querySelector("dialog[open]")) { setTimeout(showNews, 1500); return; }
+    $("#newsList").innerHTML = NEWS.map((n, i) => `<li><i>${n.icon}</i><div><b>${esc(n.title)}</b>${esc(n.text)}${n.go ? `<br><button class="btn" data-news="${i}">${esc(n.btn)}</button>` : ""}</div></li>`).join("");
+    const d = $("#newsDialog");
+    d.showModal ? d.showModal() : d.setAttribute("open", "");
+    markSeen();
+  }
+  const closeNews = () => { const d = $("#newsDialog"); d.close ? d.close() : d.removeAttribute("open"); };
+  $("#newsOk").addEventListener("click", closeNews);
+  $("#newsList").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-news]"); if (!b) return;
+    closeNews();
+    location.hash = "#me";
+    setTimeout(() => { const el = document.querySelector("." + NEWS[+b.dataset.news].go); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 350);
+  });
+  setTimeout(showNews, 2200);
+
   /* ───────────────── 第一次打开：3 步引导 ───────────────── */
   const TOUR_KEY = "dailyplan.tour." + PRODUCT.slug;
   function showTour() {
@@ -6456,13 +6774,17 @@
   if (days[currentKey()] && days[currentKey()].towered) { loadDay(currentKey()); nextCard(currentKey()); }
   else if (!loadDay(currentKey())) {
     const recent = sortedKeys()[0];
-    if (recent) {
+    if (defaultItems()) {
+      setItems(defaultItems());
+      if (recent && THEMES.includes(days[recent].theme)) setTheme(days[recent].theme, false);
+    } else if (recent) {
       setItems(days[recent].items.map((x) => ({ text: x.text, mark: "empty" })));
       if (THEMES.includes(days[recent].theme)) setTheme(days[recent].theme, false);
     } else {
       setItems(DEFAULT_ITEMS);
     }
   }
+  if (applyDated(currentKey())) saveDay();
   /* 网址参数（预览 / 分享某个样式用，不会写进记录）：
      ?theme=autumn&pal=2&mode=back&demo=1&solo=1 */
   const q = new URLSearchParams(location.search);

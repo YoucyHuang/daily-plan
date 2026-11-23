@@ -11,10 +11,11 @@
 import html, json, os, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = 32   # 改了代码就加 1，手机上装好的版本会自动换新
+VERSION = 33   # 改了代码就加 1，手机上装好的版本会自动换新
 SITE = "https://youcyhuang.github.io/daily-plan/"   # 搬到国内平台后改成新网址
 PRODUCTS = json.load(open(os.path.join(ROOT, "products.json"), encoding="utf-8"))
 TPL = open(os.path.join(ROOT, "src", "template.html"), encoding="utf-8").read()
+TPL = TPL.replace("__APP_VERSION__", str(VERSION))   # 更新提醒用：版本变了，老用户打开时弹一次「这次更新了什么」
 # 主题包：src/themes/<主题>.js，每个主题的 7 套版式各写在自己的文件里，插在 renderLayout 前面
 # 只想带某几个包时：THEME_PACKS=lwf,y2k python build.py --preview D
 _only = [x for x in os.environ.get("THEME_PACKS", "").split(",") if x]
